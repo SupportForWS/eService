@@ -1,0 +1,353 @@
+using eServices.APIs.UserApp.Application.AppSettingsConfigurations;
+using eServices.APIs.UserApp.Application.Infrastructure.Localization;
+using eServices.APIs.UserApp.OldApplication.Models;
+using FluentValidation;
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System.Data;
+using eServicesV2.Kernel.Core.Wrappers;
+using Microsoft.AspNetCore.Hosting;
+using eServicesV2.Kernel.Repository.Base;
+using Microsoft.EntityFrameworkCore;
+using eServicesV2.Kernel.Domain.Helpers;
+using eServicesV2.Kernel.Domain.Enums;
+using eServicesV2.Kernel.Core.Enums;
+using eServices.APIs.UserApp.Application.Features.V1.Queries;
+using static eServices.APIs.UserApp.Application.Features.V1.Commands.BankGuaranteeCommands.Organizations.OrganizationBankGuaranteeInitiationCommand;
+using eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities;
+using eServicesV2.Kernel.Service.ServiceRequestServices;
+using eServicesV2.Kernel.Core.Exceptions;
+using NHC.Kernel.Core.Extensions;
+
+namespace eServices.APIs.UserApp.Application.Features.V1.Commands.BankGuaranteeCommands.Organizations
+{
+    public class OrganizationBankGuaranteeInitiationCommand : IRequest<Response<OrganizationBankGuaranteeInitiationDTO>>
+    {
+        #region Constructor
+
+        BankGuaranteeInitiationParamsDTO _params;
+
+        public OrganizationBankGuaranteeInitiationCommand(BankGuaranteeInitiationParamsDTO model)
+        {
+            _params = model;
+        }
+
+        #endregion
+
+        #region Handler
+        public class CustomBusinessActivityBankGuaranteeInitiationHandler : BaseQueryHandler, IRequestHandler<OrganizationBankGuaranteeInitiationCommand, Response<OrganizationBankGuaranteeInitiationDTO>>
+        {
+
+            private readonly IServiceRequestService _serviceRequestService;
+
+            public CustomBusinessActivityBankGuaranteeInitiationHandler(IValidatorFactory validatorFactory,
+                IHttpContextAccessor httpContextAccessor, IUserAppStringLocalizer localizer,
+                ILogger<CustomBusinessActivityBankGuaranteeInitiationHandler> logger, IHostingEnvironment hostingEnvironment,
+                IUserAppConfigurations configurations,
+                IServiceRequestService serviceRequestService,
+                IeServicesUnitOfWork ieServicesUnitOfWork) :
+                base(validatorFactory, httpContextAccessor, localizer, hostingEnvironment, configurations, ieServicesUnitOfWork)
+            {
+                _serviceRequestService = serviceRequestService;
+            }
+
+            public async Task<Response<OrganizationBankGuaranteeInitiationDTO>> Handle(OrganizationBankGuaranteeInitiationCommand request, CancellationToken cancellationToken)
+            {
+                var serviceId = (ServiceTypesEnum)int.Parse(CommonFunctions.CsUploadDecrypt(request._params.EncryptedServiceId));
+                var activityId = Convert.ToInt64(CommonFunctions.CsUploadDecrypt(request._params.ActivityId.Replace(" ", "+")));
+
+                bool isExist = false;
+                ServiceRequest serviceRequest;
+                List<GetDocumentDTO> uploadedDocuments = new List<GetDocumentDTO>();
+
+                var serviceRequestDetails = await _IeServicesUnitOfWork.ServiceRequestsDetailRepository.Get(a => a.RequestServicesId == (int)serviceId &&
+                                    (request._params.BankGuaranteeFor == BankGuaranteeForEnum.CustomsBusinessActivity ?
+                                    a.BankGuaranteeCustomsBusinessActivityId == activityId : a.BankGuaranteeCustomsSystemUserId == activityId) &&
+                                    a.StateId != ServiceRequestDetailsStatesEnum.EServicesRequestDetailsDeletedState.ToString() &&
+                                                a.OrganizationId == _UserOrganizationId)
+                                    .Include(a => a.ServiceRequest)
+                                    .OrderByDescending(a => a.EserviceRequestId)
+                                    .FirstOrDefaultAsync();
+
+                if (serviceRequestDetails!=null && (
+                    serviceRequestDetails.StateId == nameof(BankGuaranteeStatesEnum.EServiceBPBGRequestSubmittedState) ||
+                    serviceRequestDetails.StateId == nameof(BankGuaranteeStatesEnum.EServiceBPBGRequestInProgressState)
+                    )
+                    )
+                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.ARequestHasBeenAlreadySubmittedPleaseCheckInMyRequestsScreenForTheStatus]);
+
+
+                if (serviceRequestDetails != null && serviceRequestDetails.StateId == nameof(BankGuaranteeStatesEnum.EServiceBPBGRequestCompletedState) && serviceId == ServiceTypesEnum.RegisterBankGuaranteeForCustomsBusinessActivity)
+                {
+                    var BgDetails = await _IeServicesUnitOfWork.OrganizationBGDetailsRepository.Get().Where(a => a.OrgBGDetailId == Convert.ToInt32(serviceRequestDetails.BgId)).FirstOrDefaultAsync();
+                    if (BgDetails.StateId != OrganizationBankGuaranteeStatusEnum.InitialReleased.GetEnumDescription() &&
+                    BgDetails.StateId != OrganizationBankGuaranteeStatusEnum.Released.GetEnumDescription() &&
+                    BgDetails.StateId != OrganizationBankGuaranteeStatusEnum.Seized.GetEnumDescription())
+                    {
+                        throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.YouHaveAlreadyCompletedBGRequest]);
+
+                    }
+                    if (BgDetails.StateId == OrganizationBankGuaranteeStatusEnum.InitialReleased.GetEnumDescription() ||
+                    BgDetails.StateId == OrganizationBankGuaranteeStatusEnum.Released.GetEnumDescription() ||
+                    BgDetails.StateId == OrganizationBankGuaranteeStatusEnum.Seized.GetEnumDescription())
+                    {
+                        var businessActivityDetails = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository.Get()
+                            .Where(a => a.Id == activityId).FirstOrDefaultAsync();
+                        if(businessActivityDetails.StatusId == (int)CustomsBusinessActivityStatusEnum.InitialApproved)
+                        {
+                            isExist = true;
+                        }
+                    }
+                }
+                if (serviceRequestDetails == null || isExist)
+                {
+                    var requestData = await _serviceRequestService.GenerateRequestNumberAndId(serviceId);
+                    serviceRequest = new ServiceRequest(
+                       eserviceRequestId: requestData[0].RequestId,
+                       eserviceRequestNumber: requestData[0].RequestNumber,
+                       createdBy: _UserIdString,
+                       stateId:BankGuaranteeStatesEnum.EServiceBPBGRequestCreatedState.ToString(),
+                       serviceId: (int)serviceId,
+                       requesterUserId: _UserId);
+
+                    await _IeServicesUnitOfWork.ServiceRequestRepository.AddAsync(serviceRequest);
+
+                    var requestDtaislsIds = await _serviceRequestService.GenerateRequesDetailsId();
+
+                    int? customsBusinessActivityId = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository
+                                                                                .Get(p => p.Id == activityId)
+                                                                                .Select(c => c.CustomsBusinessActivityId)
+                                                                                .FirstOrDefaultAsync();
+                    serviceRequestDetails = new ServiceRequestsDetail(
+                        eserviceRequestDetailsId: requestDtaislsIds[0],
+                        eserviceRequestId: serviceRequest.EserviceRequestId,
+                        requestForUserType: _UserId,
+                        requestServicesId: (int)serviceId,
+                        stateId: BankGuaranteeStatesEnum.EServiceBPBGRequestCreatedState.ToString(),
+                        organizationId: _UserOrganizationId,
+                        createdBy: _UserIdString,
+                        requesterUserId: _UserId,
+                        requestForUserId: _UserId,
+                        bankGuaranteeFor: (int)request._params.BankGuaranteeFor,
+                        bankGuaranteeCustomsBusinessActivityId: request._params.BankGuaranteeFor == BankGuaranteeForEnum.CustomsBusinessActivity? activityId : null,
+                        bankGuaranteeCustomsSystemUserId: request._params.BankGuaranteeFor == BankGuaranteeForEnum.CustomsSystemUser ? activityId : null,
+                        customsBusinessActivityId: customsBusinessActivityId //check for null value 0
+                        );
+
+                    await _IeServicesUnitOfWork.ServiceRequestsDetailRepository.AddAsync(serviceRequestDetails);
+                    await _IeServicesUnitOfWork.CommitAsync();
+                }
+                else
+                {
+                    serviceRequest = serviceRequestDetails.ServiceRequest;
+                    uploadedDocuments = (await _serviceRequestService.GetServiceUploadedDocuments(serviceRequestDetails.EserviceRequestId))
+                                                .Select(a => new GetDocumentDTO
+                                                {
+                                                    CreatedBy = a.CreatedBy,
+                                                    DocumentId = CommonFunctions.CsUploadEncrypt(a.DocumentId.ToString()),
+                                                    DocumentType = CommonFunctions.CsUploadEncrypt(a.DeclarationDocumentType.ToString()),
+                                                    CreatedDate = a.DateCreated,
+                                                    NewFileName = a.DocumentName,
+                                                }).ToList();
+                }
+
+                
+                var documentTypes = await _IeServicesUnitOfWork.BankGuaranteeRequiredDocumentsRepository.Get()
+                                                            .Include(a => a.EServiceType)
+                                                            .Select(a => new GetHookDTO
+                                                            {
+                                                                IsRequired = true,
+                                                                Name = _Language == LanguageEnum.English ? a.EServiceType.Name : a.EServiceType.LocalDescription,
+                                                                Id = CommonFunctions.CsUploadEncrypt(a.DocumentId.ToString())
+                                                            }).ToListAsync();
+
+                var orgDetails = await _IeServicesUnitOfWork.OrganizationsRepository.Get().Where(p => p.OrganizationId == _UserOrganizationId)
+                    .Select(p=> 
+                             new { LocalDescription=p.LocalDescription??null, Name=p.Name??null, CommercialLicenseNo=p.CommercialLicenseNo??null, CommercialLicenseType=p.CommercialLicenseType??null})
+                    .FirstOrDefaultAsync();
+                var result = new OrganizationBankGuaranteeInitiationDTO
+                {
+
+                    EServiceRequestId = serviceRequest.EserviceRequestId,
+                    ServiceName = ServiceHelpers.GetServiceName(serviceId, _Localizer),
+                    RequestNumber = serviceRequest.EserviceRequestNumber,
+                    EncryptedRequestId = CommonFunctions.CsUploadEncrypt(serviceRequest.EserviceRequestId.ToString()),
+                    OrganizationNameArabic = orgDetails.LocalDescription?? string.Empty,
+                    OrganizationNameEnglish = orgDetails.Name??string.Empty,
+                    TradingLicenseNumber = _LicenseNumber,
+                    CivilAuthorityNumber = _civilIdOfLoggedInUser,
+                    BankGuaranteeFor = request._params.BankGuaranteeFor.ToString() == BankGuaranteeForEnum.CustomsBusinessActivity.ToString() ? 
+                                      _Localizer[Resources.ResourcesEnum.CustomsBusinessActivity] : 
+                                       request._params.BankGuaranteeFor.ToString() == BankGuaranteeForEnum.CustomsSystemUser.ToString()? _Localizer[Resources.ResourcesEnum.CustomsSystemUser]: _Localizer[Resources.ResourcesEnum.Broker],
+                    BankGuaranteeForId = request._params.BankGuaranteeFor,
+                    DocumentTypes = documentTypes,
+                    Documents = uploadedDocuments,
+                    EncryptedServiceId = request._params.EncryptedServiceId,
+                    ActivityId = activityId,
+                    CommercialLicenseNumber=orgDetails.CommercialLicenseNo,
+                    CommercialLicenseType = orgDetails.CommercialLicenseType == (int)CommercialTypesEnum.corporation ? _Localizer[Resources.ResourcesEnum.Corporation]: orgDetails.CommercialLicenseType == (int)CommercialTypesEnum.personal? _Localizer[Resources.ResourcesEnum.Personal]: _Localizer[Resources.ResourcesEnum.Partnership],
+                    RejectionReason=serviceRequestDetails.RejectionRemarks,
+                    BankGuaranteeNumber=serviceRequestDetails.BankGuaranteeNumber,
+                    BankId=serviceRequestDetails.BankGuaranteeBankId,
+                    IssueDate=serviceRequestDetails.BankGuaranteeDate,
+                    ExpiryDate=serviceRequestDetails.BankGuaranteeExpiryDate,
+                    
+                };
+
+                if (serviceId != ServiceTypesEnum.RegisterBankGuaranteeForCustomsBusinessActivity)
+                {
+                    var bankGuarantee = await _IeServicesUnitOfWork.OrganizationBGDetailsRepository
+                        .Get(p => request._params.BankGuaranteeFor == BankGuaranteeForEnum.CustomsBusinessActivity ?
+                        p.OrganizationCustomsBusinessActivityId == activityId : p.CustomsSystemUserId == activityId)
+                        .FirstOrDefaultAsync();
+
+                    result.IssueDate = bankGuarantee.BGIssueDt;
+                    result.ExpiryDate = bankGuarantee.BGExpiryDt;
+                    result.BankGuaranteeNumber = bankGuarantee.BGNo;
+                    result.BankId = bankGuarantee.BankId.ToString();
+                    result.BankGuaranteeStatus =  GetStateName(bankGuarantee.StateId);
+                }
+                if (request._params.BankGuaranteeFor == BankGuaranteeForEnum.CustomsBusinessActivity)
+                {
+
+                    var customBusinessActivity = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository
+                        .Get(p => p.Id == activityId)
+                           .Include(p => p.CustomsBusinessActivityStatus).Include(p => p.CustomsBusinessActivity).FirstOrDefaultAsync();
+                    var bankGuaranteeAmount = await _IeServicesUnitOfWork.BankGuaranteeRoleAmountsRepository
+                            .Get(p => (int)p.CustomsBusinessActivityId == customBusinessActivity.CustomsBusinessActivity.Id).Select(p => p.Amount).FirstOrDefaultAsync();
+                    var requestStatus = _Language == LanguageEnum.English ? customBusinessActivity.CustomsBusinessActivityStatus?.ValueEnglish : customBusinessActivity.CustomsBusinessActivityStatus?.ValueArabic;
+
+                    result.RequestStatus = serviceRequestDetails.StateId == nameof(BankGuaranteeStatesEnum.EServiceBPBGRequestRejectedState) ? _Localizer[Resources.ResourcesEnum.Rejected] : _Localizer[Resources.ResourcesEnum.Created];
+                    result.RequestSubmissionDate = serviceRequest.DateCreated;
+                    result.BankGuaranteeAmountKD = bankGuaranteeAmount;
+                    result.CustomsBusinessActivityName = _Language == LanguageEnum.English ? customBusinessActivity.CustomsBusinessActivity?.NameEnglish : customBusinessActivity.CustomsBusinessActivity?.NameArabic;
+                    result.CustomsBusinessActivityStatus = requestStatus;
+
+                }
+                else
+                {
+                    var customsUser = await _IeServicesUnitOfWork.CustomsSystemUserRepository
+                        .Get(p => p.Id == activityId).Include(p => p.CustomsSystemUserActivities).FirstOrDefaultAsync();
+                    var customsBusinessActivityId = customsUser.CustomsSystemUserActivities.Select(p => p.CustomsBusinessActivityId);
+                    var bankGuaranteeAmount = await _IeServicesUnitOfWork.BankGuaranteeRoleAmountsRepository
+                       .Get(p => customsBusinessActivityId.Contains((int)p.Id)).SumAsync(p => p.Amount);
+                    result.RequestStatus = serviceRequestDetails.StateId == nameof(BankGuaranteeStatesEnum.EServiceBPBGRequestRejectedState) ? _Localizer[Resources.ResourcesEnum.Rejected] : _Localizer[Resources.ResourcesEnum.Created];
+                    result.RequestSubmissionDate = serviceRequest.DateCreated;
+                    result.BankGuaranteeAmountKD = bankGuaranteeAmount;
+                    result.UserCivilId = customsUser.CivilIdNumber;
+                    result.UserFullNameEnglish = customsUser.FirstNameEnglish + " " + customsUser.SecondNameEnglish;
+                    result.UserFullNameArabic = customsUser.FirstNameArabic + " " + customsUser.SecondNameArabic + " " + customsUser.LastNameArabic;
+
+                }
+                return result;
+            }
+            private string GetStateName(string stateId)
+            {
+                string status = string.Empty;
+                if (stateId.ToLower().Contains("deactivated"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.DeActivated];
+                }
+
+                else if (stateId.ToLower().Contains("activated"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.Activated];
+                }
+
+                else if (stateId.ToLower().Contains("seized"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.Seized];
+                }
+
+                else if (stateId.ToLower().Contains("extended"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.Extended];
+                }
+
+                else if (stateId.ToLower().Contains("initialreleased"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.InitialReleased];
+                }
+
+                else if (stateId.ToLower().Contains("released"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.Released];
+                }
+
+                else if (stateId.ToLower().Contains("expired"))
+                {
+                    status = _Localizer[Resources.ResourcesEnum.Expired];
+                }
+                return status;
+            }
+
+        }
+
+        #endregion
+
+        #region DTOS
+
+        public class OrganizationBankGuaranteeInitiationDTO
+        {
+            public string ServiceName { get; set; }
+            public long ActivityId { get; set; }
+            public long EServiceRequestId { get; set; }
+            public string EncryptedServiceId { get; set; }
+            public string RequestNumber { get; set; }
+            public string EncryptedRequestId { get; set; }
+            public string RequestStatus { get; set; }
+            public DateTime? RequestSubmissionDate { get; set; }
+            public string RejectionReason { get; set; }
+            public string OrganizationNameArabic { get; set; }
+            public string OrganizationNameEnglish { get; set; }
+            public string TradingLicenseNumber { get; set; }
+            public string CivilAuthorityNumber { get; set; }
+            public string CommercialLicenseType { get; set; }
+            public string CommercialLicenseNumber { get; set; }
+            public string CustomsBusinessActivityName { get; set; }
+            public string BankGuaranteeStatus { get; set; }
+            public string CustomsBusinessActivityStatus { get; set; }
+            public string UserFullNameArabic { get; set; }
+            public string BankId { get; set; }
+            public string UserFullNameEnglish { get; set; }
+            public string UserCivilId { get; set; }
+            public decimal BankGuaranteeAmountKD { get; set; }
+            public BankGuaranteeForEnum BankGuaranteeForId { get; set; }
+            public string BankGuaranteeFor { get; set; }
+            public DateTime? IssueDate { get; set; }
+            public DateTime? ExpiryDate { get; set; }
+            public string? BankGuaranteeNumber { get; set; }
+            public List<GetDocumentDTO> Documents { get; set; }
+            public List<GetHookDTO> DocumentTypes { get; set; }
+
+
+        }
+
+        public class GetDocumentDTO
+        {
+            public string NewFileName { get; set; }
+            public string DocumentId { get; set; }
+            public string DocumentType { get; set; }
+            public DateTime? CreatedDate { get; set; }
+            public string CreatedBy { get; set; }
+        }
+
+        public partial class GetHookDTO
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public bool IsRequired{ get; set; } = true;
+        }
+
+        public class BankGuaranteeInitiationParamsDTO
+        {
+            public string ActivityId { get; set; }
+            public BankGuaranteeForEnum BankGuaranteeFor { get; set; }
+            public string EncryptedServiceId { get; set; }
+        }
+
+
+        #endregion 
+    }
+}
