@@ -1,0 +1,12 @@
+ReportingService2005Soap rs = new ReportingService2005SoapClient(SQLRS.ReportingService2005SoapClient.EndpointConfiguration.ReportingService2005Soap);
+                ReportExecutionServiceSoap rsExec= new ReportExecutionServiceSoapClient(SQLRSEXE.ReportExecutionServiceSoapClient.EndpointConfiguration.ReportExecutionServiceSoap) ;
+
+                DataSet dsReportInfo = new DataSet();
+                System.Net.NetworkCredential NetCred = new System.Net.NetworkCredential();
+                NetCred.Domain = "test";
+                string sPwd ="test";
+                //dsReportInfo = DAL.GetReportData(ReportFileName);
+                NetCred.Password = sPwd;
+                NetCred.UserName = "test";
+                //string ReportServerURL = "/Jan22/"+ sReportName;
+                string ReportServerURL = "testt" + "sReportName";
