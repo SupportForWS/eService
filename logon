@@ -1,0 +1,396 @@
+USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[usp_BRS_MApp_LogOnAction]    Script Date: 9/24/2023 2:47:15 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER        PROCEDURE [etrade].[usp_BRS_MApp_LogOnAction] @EmailId VARCHAR(120)              
+ ,@Pass VARCHAR(250)              
+ ,@Language VARCHAR(5)              
+ ,@GeographicalLocation NVARCHAR(250) = NULL              
+ ,@DeviceType NVARCHAR(250) = NULL              
+ ,@BrowserIP VARCHAR(250) = NULL              
+ ,@DeviceVersion VARCHAR(250) = NULL              
+ ,@DeviceManufacturer VARCHAR(250) = NULL              
+ ,@DeviceSerial VARCHAR(250) = NULL              
+ ,@DeviceModel VARCHAR(250) = NULL              
+ ,@SignInSignOut VARCHAR(15) = NULL              
+ ,@TokenId VARCHAR(35) = ''              
+             
+AS              
+BEGIN              
+ DECLARE @UserId INT = NULL              
+ DECLARE @IsMobileVerified INT = NULL              
+ DECLARE @IsEmailVerified INT = NULL              
+ DECLARE @DbPass VARCHAR(250) = ''              
+ DECLARE @AccountStatus CHAR(1) = '0'              
+ DECLARE @reqStatus CHAR(2) = '-1'              
+ DECLARE @InvalidPwdAttempts INT = 0              
+ DECLARE @VerificationMode VARCHAR(10) = ''              
+ DECLARE @MyUsedOrgid VARCHAR(10) = ''              
+              
+              
+ print('etst')              
+ ----=== IF THE EMAIL IS NOT YET VERIFIED THEN THIS BLOCK WILL BE USED TO RESEND OTP TO EMAIL AND REDIRECT USER TO EMAIL VERIFICATION SCREEN              
+ -- -- THIS IS APT FOR ADDITIONAL USERS               
+ -- This functionality is already present              
+ -- SELECT '' AS FirstName              
+ --  ,'' AS LastName              
+ --  ,@UserId AS UserId              
+ --  ,@EmailId AS EmailId              
+ --  ,'UnVerified' AS "Status" --@reqStatus              
+ --  ,'' AS "UserType"              
+ --  ,'' AS "AllowedMenus"              
+ --  ,@VerificationMode AS EtradeAppVerificationMode              
+ --     ,@IsEmailVerified AS "IsEmailVerified"              
+ --     ,@TokenId AS TokenId              
+ --  ,'LogOnResult' AS "TableName"              
+ ----===              
+ SELECT @VerificationMode = ConfigValue              
+ FROM Configurations              
+ WHERE ConfigurationId = 'EtradeAppVerificationMode'              
+              
+ SELECT TOP 1 @Userid = UserId               
+  ,@IsEmailVerified = IsEmailVerified              
+  ,@IsMobileVerified = IsMobileVerified              
+  ,@AccountStatus = AccountStatus              
+  ,@DbPass = [Password]              
+  ,@InvalidPwdAttempts = Isnull(InvalidPwdAttempts, 0)              
+  ,@MyUsedOrgid=isnull(OrgID,0)              
+ FROM [etrade].MobileUser              
+ WHERE EmailId = @EmailId AND [Password] = @Pass        and Accountstatus!='D'     
+ --AND LEGALENTITY='1'    --commented as etrade and eservices are one now        
+  COLLATE SQL_Latin1_General_CP1_CS_AS --AND AccountStatus = '1'              
+              
+   print 'userid'  
+   print @Userid  
+ declare @UserorgStateid varchar(200)              
+              
+-- added the code to stop cancelled user from login               
+              
+--IF NOT EXISTS(select isnull(StateId,'0')  from Organizations where OrganizationId in (@MyUsedOrgid) and @MyUsedOrgid not in('0'))              
+--BEGIN              
+--print('in')              
+--set @UserorgStateid='OK'              
+--END              
+              
+              
+print(@UserorgStateid)              
+              
+--if(@UserorgStateid!='OrganizationsCancelledState')              
+begin              
+              
+              
+              
+SET @IsEmailVerified = (              
+    SELECT IsEmailVerified              
+    FROM [etrade].MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+ SET @IsMobileVerified = (              
+    SELECT IsMobileVerified              
+    FROM [etrade].MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+            
+    print    @IsEmailVerified  
+    print   @IsMobileVerified    
+IF(@IsEmailVerified=1 AND @IsMobileVerified=1)              
+BEGIN      
+print 'inside @IsMobileVerified'          
+ -- print(@DbPass);              
+ --AND (ExpiryDate is null or ExpiryDate > GETDATE())                
+ --Select * from MobileUser                
+ IF ISNULL(@UserId, '') <> ''              
+ BEGIN              
+  IF (IsNull(@AccountStatus, '') <> '1')              
+   SET @reqStatus = '-2' -- Account Locked                 
+  ELSE IF (IsNull(@Pass, '') <> IsNull(@DbPass, '-1') COLLATE SQL_Latin1_General_CP1_CS_AS)              
+  BEGIN              
+   SET @reqStatus = '-3' -- Faild Password Missmath                
+    --print('Checkhere')              
+              
+   IF (Isnull(@InvalidPwdAttempts, 0) >= 3)             BEGIN              
+    UPDATE [etrade].MobileUser              
+    SET AccountStatus = '0'              
+    WHERE Userid = @Userid              
+              
+    SET @reqStatus = '-2' -- Account Locked As more Invalid Attempts              
+   END              
+   ELSE IF (Isnull(@InvalidPwdAttempts, 0) >= 2)              
+   BEGIN              
+    SET @reqStatus = '-5' -- Request User To reset Pwd as account has more Invalid Attempts                
+   END              
+   ELSE         BEGIN              
+    PRINT ('1');              
+              
+    UPDATE [etrade].MobileUser              
+    SET InvalidPwdAttempts = IsNull(InvalidPwdAttempts, 0) + 1              
+    -- WHERE Userid = @Userid              
+    WHERE EmailId = @EmailId              
+   END              
+  END              
+  ELSE              
+  BEGIN              
+   SET @reqStatus = '0' -- success                    
+   IF (Isnull(@InvalidPwdAttempts, 0) != 0)              
+   BEGIN              
+    IF (Isnull(@InvalidPwdAttempts, 0) >= 2)              
+    BEGIN              
+     SET @reqStatus = '-5' --Request User To reset Pwd as account has more Invalid Attempts                
+    END              
+    ELSE              
+    BEGIN              
+     UPDATE [etrade].MobileUser              
+     SET InvalidPwdAttempts = 0              
+     -- WHERE Userid = @Userid              
+     WHERE EmailId = @EmailId              
+    END              
+   END              
+  END              
+ END              
+ ELSE              
+  SET @reqStatus = '-1'              
+              
+ -- added by azhar              
+ IF (@DbPass = '')              
+ BEGIN              
+  SET @DbPass = (              
+    SELECT [Password]              
+    FROM [etrade].MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+ END              
+              
+              
+ IF (IsNull(@Pass, '') <> IsNull(@DbPass, '-1') COLLATE SQL_Latin1_General_CP1_CS_AS)              
+ BEGIN              
+  PRINT 'pass mism'              
+              
+  -- print(@Pass);              
+  -- print(@DbPass);              
+  UPDATE [etrade].MobileUser              
+  SET InvalidPwdAttempts = IsNull(InvalidPwdAttempts, 0) + 1              
+  WHERE EmailId = @EmailId              
+              
+  SELECT TOP 1 @AccountStatus = AccountStatus              
+   ,@InvalidPwdAttempts = Isnull(InvalidPwdAttempts, 0)              
+  FROM [etrade].MobileUser              
+  WHERE EmailId = @EmailId              
+              
+  IF (IsNull(@AccountStatus, '') <> '1')              
+  BEGIN              
+   PRINT 'pass @AccountStatus!=1'              
+              
+   SET @reqStatus = '-2'              
+              
+   UPDATE [etrade].MobileUser              
+   SET AccountStatus = '0'              
+   WHERE Userid = @Userid              
+  END              
+              
+  --defined to lock(-5) account at 4th failed attempt -siraj              
+  --    IF (Isnull(@InvalidPwdAttempts, 0) >= 2)              
+  -- begin              
+  --print 'pass @@InvalidPwdAttempts>=2'              
+  -- SET @reqStatus = '-5'-- -5              
+  -- end                
+  DECLARE @EMAILVERIFIEDCODE INT = 0;              
+  DECLARE @MobileVERIFIEDCODE INT = 0;              
+              
+  SET @EMAILVERIFIEDCODE = (              
+    SELECT IsEmailVerified              
+    FROM [etrade].MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+ SET @MobileVERIFIEDCODE = (              
+    SELECT IsMobileVerified              
+    FROM [etrade].MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+  IF (Isnull(@InvalidPwdAttempts, 0) >= 4)              
+  BEGIN              
+   IF (@EMAILVERIFIEDCODE != 1 )--or @MobileVERIFIEDCODE!=1)-- check if any one is not verified . if no then redirect to verification page to verify both// This if block wont excute as the only if contact is verified it will enter in this block             
+   
+   BEGIN              
+    SET @reqStatus = '66' -- means emailnot verified yet and user entered wrong password while proceeding to verify              
+   END              
+   ELSE              
+   BEGIN              
+    PRINT 'pass @@InvalidPwdAttempts>=4'              
+              
+    SET @reqStatus = '-5' -- -2              
+              
+    UPDATE [etrade].MobileUser              
+    SET AccountStatus = '0'              
+    WHERE Userid = @Userid              
+   END              
+  END              
+    --print('inside');              
+ END              
+              
+END              
+ -- else              
+ -- begin               
+ ---- print('Correct');              
+ --  --UPDATE [etrade].MobileUser --commented to remain locked              
+ --  --  SET InvalidPwdAttempts = 0              
+ --  --   WHERE EmailId = @EmailId               
+ -- end               
+ IF ISNULL(@reqStatus, '') = '0'              
+ BEGIN              
+  --Create Session record Asign token pending                 
+  --Declare @TokenId varchar(35) =''                
+  IF (ISNULL(@TokenId, '') = '' AND ISNULL(@SignInSignOut, '') = 'SignIn' OR ISNULL(@SignInSignOut, '') = 'Verify')              
+   SET @TokenId = REPLACE(newid(), '-', '')              
+              
+  PRINT ('azhar');              
+              
+  EXEC [etrade].[usp_MApp_GetNewUserSession] @UserId = @UserId              
+   ,@Language = @Language              
+   ,@SignInSignOut = @SignInSignOut              
+   ,@TokenId = @TokenId              
+              
+  IF NOT EXISTS (              
+    SELECT *              
+    FROM etrade.PaidServiceConfigurations           
+    WHERE UserId = @UserId              
+    )              
+  BEGIN              
+   INSERT INTO etrade.PaidServiceConfigurations              
+   VALUES (              
+    @UserId              
+    ,''              
+    )              
+  END              
+              
+  --DECLARE @ORGID INT ,@isAdmin bit, @isSubAdmin bit              
+  --SELECT @isAdmin=isadmin ,@isSubAdmin=isSubAdmin, @ORGID=orgid from etrade.MobileUser where UserId=@UserId              
+  --IF(@isAdmin=0 AND  @isSubAdmin=0              
+  SELECT MU.FirstName              
+   ,MU.LastName             
+   ,MU.EmailId               
+   ,@TokenId AS TokenId              
+   ,MU.UserId              
+   ,'0' AS "Status"              
+   ,'Trader' AS "UserType"              
+   ,MU.LegalEntity              
+   ,MU.CivilId              
+   ,MU.LicenseNumber --ISNULL( MU.LicenseNumber,'UnLicensed') as LicenseNumber              
+   ,MU.MobileNumber              
+   --,MU.IsEmailVerified AS "isEmailVerified"              
+   ,MU.Gender              
+   ,CASE               
+    WHEN ISNULL(@VerificationMode, '') <> ''              
+     THEN CASE               
+       WHEN @VerificationMode = 'EM' AND MU.IsEmailVerified = '1' AND MU.IsMobileVerified = '1'              
+        THEN '0'              
+       WHEN @VerificationMode = 'E' AND MU.IsEmailVerified = '1'              
+        THEN '0'              
+       WHEN @VerificationMode = 'M' AND MU.IsMobileVerified = '1'              
+        THEN '0'              
+       ELSE '-1'              
+       END              
+    ELSE '0'              
+    END AS 'EmailCStaus'              
+   ,CASE               
+    WHEN MU.IsEmailVerified <> '1'              
+     THEN '-1'              
+    ELSE '0'              
+    END AS IsEmailVerified              
+   ,CASE               
+    WHEN MU.IsMobileVerified <> '1'              
+     THEN '-1'              
+    ELSE '0'              
+    END AS IsMobileVerified              
+   ,PS.Menu_Items AS AllowedMenus              
+   ,@VerificationMode AS EtradeAppVerificationMode              
+   --Newly added --siraj              
+   ,MU.isAdmin              
+   ,MU.isSubAdmin              
+   ,isnull(MUORG.OrganizationId  ,MU.OrgId) as OrgID              
+   ,MU.MC_UserId          
+   ,ISNULL(MU.INDUSTRIALLICENSENUMBER,'') INDUSTRIALLICENSENUMBER      
+   ,ISNULL(MU.COMMERCIALLICENSENUMBER,'')  COMMERCIALLICENSENUMBER       
+   ,ISNULL(MU.ImporterLicenseNumber,'')  ImporterLicenseNumber    
+   ,ISNULL(MU.CommercialLicenseYear,'')  CommercialLicenseYear      
+   ,ISNULL(MU.CompanyCivilID,'') CompanyCivilID      
+   ,MU.GOVERNORATE GOVERNORATE-- ISNULL(MU.GOVERNORATE,'')  GOVERNORATE      
+   ,MU.REGION REGION--ISNULL(MU.REGION,'')  REGION      
+   ,(SELECT TOP 1 ISNULL(GOVERNORATEENG,'') FROM ETRADE.KuwaitPostalCodes WHERE GOVERNORATEID=CONVERT(INT, MU.GOVERNORATE)) GOVERNORATEENG-- ISNULL(MU.GOVERNORATE,'')  GOVERNORATE      
+   ,(SELECT TOP 1 ISNULL(REGIONENG,'') FROM ETRADE.KuwaitPostalCodes WHERE REGIONID=CONVERT(INT, MU.REGION)) REGIONENG--ISNULL(MU.REGION,'')  REGION      
+   ,(SELECT TOP 1 ISNULL(GOVERNORATEARA,'') FROM ETRADE.KuwaitPostalCodes WHERE GOVERNORATEID=CONVERT(INT, MU.GOVERNORATE)) GOVERNORATEARA-- ISNULL(MU.GOVERNORATE,'')  GOVERNORATE      
+   ,(SELECT TOP 1 ISNULL(REGIONARA,'') FROM ETRADE.KuwaitPostalCodes WHERE REGIONID=CONVERT(INT, MU.REGION)) REGIONARA--ISNULL(MU.REGION,'')  REGION      
+   ,ISNULL(MU.POSTALCODE,'')  POSTALCODE      
+   ,ISNULL(MU.BLOCK,'')  BLOCK      
+   ,ISNULL(MU.STREET,'') STREET      
+   ,ISNULL(MU.ADDRESS,'')  ADDRESS       
+   ,case when  MU.INDUSTRIALLICENSENUMBER is null then 0  else   1 end  'IsIndustrial'      
+   --Newly added --siraj              
+   ,'LogOnResult' AS "TableName",isnull(userthemes,'Blue') as UserThemes       
+   ,MU.MociCompanyName         
+  FROM [etrade].MobileUser MU              
+  LEFT JOIN etrade.PaidServiceConfigurations PS ON MU.UserId = PS.UserId        
+  LEFT JOIN etrade.MobileUserOrgMaps MUORG ON MU.UserId = MUORG.UserId     
+  WHERE MU.UserId = @UserId     
+ --order by MUORG.OrganizationId desc
+ END              
+ ELSE              
+ BEGIN              
+  --SET @IsEmailVerified = (              
+  --  SELECT IsEmailVerified              
+  --  FROM etrade.MobileUser              
+  --  WHERE EmailId = @EmailId              
+  --  )              
+  --SET @IsMobileVerified = (              
+  --  SELECT IsEmailVerified              
+  --  FROM etrade.MobileUser              
+  --  WHERE EmailId = @EmailId              
+  --  )      
+    
+            
+  --SET @Userid = (              
+  --  SELECT UserId              
+  --  FROM etrade.MobileUser              
+  --  WHERE EmailId = @EmailId              
+  --  )              
+              
+    declare @userthemes varchar(50)              
+              
+    SET @userthemes = (              
+    SELECT isnull(userthemes,'Blue')              
+    FROM etrade.MobileUser              
+    WHERE EmailId = @EmailId              
+    )              
+              
+              
+              
+  SELECT '' AS FirstName              
+   ,'' AS LastName              
+   ,@UserId AS UserId              
+   ,@EmailId AS EmailId              
+   ,@reqStatus AS "Status"              
+   ,'' AS "UserType"              
+   ,'' AS "AllowedMenus"              
+   ,@VerificationMode AS EtradeAppVerificationMode              
+   --,@IsEmailVerified AS "IsEmailVerified"              
+   --,@IsMobileVerified AS "IsMobileVerified"-- added-- Both email and sms verification is made mandatory -- Siraj              
+   ,CASE --added               
+    WHEN @IsEmailVerified='1'              
+     THEN '0'              
+    ELSE '-1'              
+    END AS IsEmailVerified              
+   ,CASE --added               
+    WHEN @IsMobileVerified ='1'              
+     THEN '0'              
+ ELSE '-1'              
+    END AS IsMobileVerified              
+   ,@TokenId AS TokenId,@userthemes as UserThemes              
+   ,'LogOnResult' AS "TableName"              
+ END       
+              
+ PRINT (@reqStatus)              
+END              
+              
+end              
