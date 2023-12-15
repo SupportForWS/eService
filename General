@@ -1,5 +1,5 @@
-         PrintModelDto responseData = new PrintModelDto
-         {
-             Base64 = base64String,
-             FileName = fileName
-         };
+      public class PrintModelDto
+      {
+          public string Base64 { get; set; }
+          public string FileName { get; set; }
+      }
