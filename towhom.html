@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+
+    <style>
+        img {
+            /*border: 2px solid black;*/
+        }
+
+        #container {
+            position: relative;
+            float: right;
+        }
+
+        #placeHolder {
+            position: absolute;
+            top: 24%;
+            left: 10%;
+            padding: 3px;
+            /*background-color: #fff;
+            border: 1px solid #f00;*/
+            text-align: right;
+            font-family: 'Times New Roman';
+            /*font-size: 3em;*/
+            font-size: 2.1em;
+            line-height: 2.2;
+            width: 1033px;
+        }
+
+        .requestNo {
+            position: absolute;
+            /*top: 13.5%;
+            left: 74%;*/
+            /*New Template from Customs 01/11/2022 */
+            top: 8.5%;
+            left: 70%;
+            /*border: 1px solid #000;*/
+            z-index: 45555;
+            color: #000;
+            font-family: 'Times New Roman';
+            font-size: 2.1em;
+            font-weight: bold;
+        }
+
+        .requestDate {
+            position: absolute;
+            /*top: 13.5%;
+            left: 10%;*/
+            /*New Template from Customs 01/11/2022 */
+            top: 8.5%;
+            left: 4%;
+            /*border: 1px solid #000;*/
+            z-index: 45555;
+            color: #000;
+            font-family: 'Times New Roman';
+            font-size: 2.1em;
+            font-weight: bold;
+        }
+
+        .QRImage {
+            position: absolute;
+            top: 50.5%;
+            left: 74%;
+            z-index: 45555;
+        }
+
+
+
+
+    </style>
+    <script type="text/javascript">
+        function goback() {
+            setTimeout(function () {
+                window.onafterprint = window.history.go(-1);
+            }, 2000);
+        }
+
+
+    </script>
+
+</head>
+
+
+<body style="margin: 0;" window.print(); goback();>
+
+ 
+        <img src="#FromImage" id="templateImg" style="width: 100%; height1: 100%" />
+
+        <div id="placeHolder" dir="rtl">
+
+           
+                 
+ 
+            تشهد الإدارة العامة للجمارك بأن السيد/ 
+ <b>
+     #BrokerName
+ </b>
+            ، 
+ و يحمل بطاقة مدنية 
+            <br />
+            رقم
+            <b>
+                #CivilID
+            </b>
+            يعمل لدى 
+           
+          <b>
+              #GeneralBrokerName
+          </b>
+            <br />
+            كـ
+            <b>
+                #BrokerType
+            </b>
+            ، ويحمل ترخيص جمركي رقم
+            <b>
+                #LicenseNo
+            </b>
+            .
+            <br />
+
+
+
+            وقد أعطيت له هذه الشهادة بناء على طلبه، دون أدنى مسئولية على الإدارة العامة للجمارك.
+
+        </div>
+
+        <div class="subject">
+            الموضوع / شهادة لمن يهمه الأمر
+        </div>
+
+        <div class="generalManagerTitle">
+            مدير عام
+        </div>
+        <div class="kuwaitCustoms">
+            الإدارة العامة للجمارك
+        </div>
+        <div class="validityNote">
+            ،،،هذه الشهادة صالحة لمدة 3 أشهر فقط من تاريخ إصدارها
+        </div>
+
+
+        <div class="requestNo">
+
+            #RequestNumber
+        </div>
+
+        <div class="requestDate">
+
+            #RequestDate
+        </div>
+
+
+
+        <%--<div class="QRImage">
+            <img src="<%= QRImage %>" alt="" style="height: 150px; width: 150px;" />
+        </div>--%>
+    </div>
+
+
+
+
+   
+
+
+</body>
+</html>
