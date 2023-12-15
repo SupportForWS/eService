@@ -1,2 +1,22 @@
+alter procedure etrade.ToWhomBrokerDetails 
+(
+	@RequestNumber Nvarchar(100)
+)
+AS
+BEGIN
 
-https://localhost:7298/api/v1/BrokerRequestQuery/get-to-whom-from-details?RequestNumber=
+Select 
+er.EServiceRequestNumber as RequestNumber,
+FORMAT ( er.DateModified, 'dd/MM/yyyy')as RequestDate,
+erd.CivilID,
+erd.LicenseNumber,
+BOD.Name as BrokerName,
+BOD.BrokerType,
+Org.LocalDescription As OrganizationName
+
+from Etrade.EServiceRequests  ER
+left  join etrade.EServiceRequestsDetails ERD on ERD.EserviceRequestId = ER.EServiceRequestId
+left join dbo.ListAllBrokersVw_ara BOD on BOD.BrokLicenseNo =ERD.LicenseNumber
+left join dbo.Organizations Org on Org.OrganizationId =ERD.OrganizationId
+where ER.EServiceRequestNumber =@RequestNumber
+end
