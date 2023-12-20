@@ -1,1 +1,3 @@
-DO/70899/KWI23
+update people  set portsites=7050926 where personalid ='53605'-- land
+update people  set portsites=7050934 where personalid ='53605' --sea
+update people  set portsites=7050932 where personalid ='53605' --Air
