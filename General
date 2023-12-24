@@ -1,2 +1,14 @@
- "InitialApprovedSuccessfullyEnglish": "Initial Approved Successfully",
- "InitialApprovedSuccessfullyArabic": "تمت الموافقة المبدئية بنجاح"
+alter procedure [etrade].[GetCommercialLic]
+ 
+(@OrganizationId int)    
+As
+Begin
+Select 
+O.CommercialLicenseNo ,
+MT.Description as CommercialLicType
+
+from Organizations O
+Left join MOCITypes MT on MT.TypeId = O.CommercialLicenseSubType
+Where O.OrganizationId =@OrganizationId
+
+end
