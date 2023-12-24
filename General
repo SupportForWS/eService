@@ -1,2 +1,20 @@
-update etrade.BankGuaranteeRequiredDocuments set documentid =332295778 where documentid = 332295592
-update etrade.BankGuaranteeRequiredDocuments set documentid =332295777 where documentid = 332295593
+USE [MicroclearLight_July23]
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (1, N'Ground Handler Agent Air', N'عامل المناولة الأرضية الجوية  ', CAST(500 AS Decimal(18, 0)), 2)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (2, N'Freight Forwarder Agent - Air', N'وكيل شحن - جوي  ', CAST(500 AS Decimal(18, 0)), 3)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (3, N'Carrier and Shipping Agent - Sea', N'وكيل النقل والشحن - البحر  ', CAST(500 AS Decimal(18, 0)), 4)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (4, N'Bounded Warehouse Public/ Private', N'المستودع المحدود عام / خاص  ', CAST(500 AS Decimal(18, 0)), 5)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (5, N'Express Courier Agent - Land', N'وكيل البريد السريع - أرض  ', CAST(500 AS Decimal(18, 0)), 6)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (6, N'Direct Release Organization', N'منظمة الإصدار المباشر  ', CAST(1000 AS Decimal(18, 0)), 7)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (7, N'DR Data Entry', N'إدخال بيانات DR  ', CAST(500 AS Decimal(18, 0)), 1)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (8, N'General/ Sub-Broker', N'عام / وسيط فرعي  ', CAST(1000 AS Decimal(18, 0)), 1)
+GO
+INSERT [etrade].[CustomsBusinessActivityBankGuaranteeRoleAmounts] ([Id], [NameEnglish], [NameArabic], [Amount], [CustomsBusinessActivityId]) VALUES (9, N'Special Brokers/ Messenger/ Special Messenger', N'وسطاء خاصون / ماسنجر / رسول خاص  ', CAST(500 AS Decimal(18, 0)), 1)
+GO
