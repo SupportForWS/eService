@@ -1,2 +1,3 @@
 ALTER TABLE etrade.IndividualAuthorizationRequests
 ADD  TemporaryRequestNumber VARCHAR(50) NULL;
+Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizationRequests','TemporaryRequestNumber',null,0,null)
