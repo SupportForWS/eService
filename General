@@ -1,3 +1,18 @@
 ALTER TABLE etrade.IndividualAuthorizationRequests
 ADD  TemporaryRequestNumber VARCHAR(50) NULL;
-Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizationRequests','TemporaryRequestNumber',null,0,null)
+Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizationRequests','TemporaryRequestNumber',null,247,null)
+
+
+select
+mc.organizationid,  mc.CommercialLicenseNo, mc.ImporterLicenseNo,mc.StateId,od.civilid,mc.ImporterLicenseExpiryDate
+From Organizations MC  
+left outer join users U  on U.OrganizationId = Mc.OrganizationId
+--INNER JOIN Organizations O ON                     
+left join BrokerOrgDetails od on mc.OrganizationId=od.BrokerOrgId
+where ( CommercialLicenseNo is not null or ImporterLicenseNo is not null)
+and mc.StateId in ( 'OrganizationsCreatedState','OrganizationsModifyState')
+and not exists (select 1 from etrade.OrganizationRequests E where e.ImporterLicenseNo=mc.ImporterLicenseNo)
+and not exists (select 1 from etrade.OrganizationRequests E where e.CommercialLicenseNo=mc.CommercialLicenseNo)
+and not exists (select 1 from etrade.mobileuser MU where MU.civilid=od.civilid)
+and mc.ImporterLicenseExpiryDate > GetDate()
+--and od.civilid is not null
