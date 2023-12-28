@@ -42,9 +42,46 @@ Add   ServiceId  int null;
 ALTER TABLE  etrade.CustomsBusinessActivityDocuments
 ALTER COLUMN CustomsBusinessActivityId int NULL;
 
-Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295737,55)
+declare @CounterId  int
+SELECT @CounterId= Max(cast(TypeId as int))+1 from [Types]
+INSERT INTO [dbo].[Types]
+           ([TypeId]
+           ,[TypeTypeId]
+           ,[Name]
+           ,[Description]
+           ,[DataProfileClassId]
+           ,[ParentId]
+           ,[Code]
+           ,[DateCreated]
+           ,[CreatedBy]
+           ,[DateModified]
+           ,[ModifiedBy]
+           ,[StateId]
+           ,[OwnerOrgId]
+           ,[OwnerLocId]
+           ,[LocalDescription]
+           ,[IsMandatory])
+     VALUES
+          (
+   @CounterId,
+   (select TypeId From types where name='BusinsessPartnerTypes'),
+   N'Request Letter By The Organization',
+   N'Request Letter By The Organization',
+   null, null, null,
+   GetDate(),
+   null, null, null,
+   'EserviceBusinessActivityDocumentTypesCreatedState',
+   29588,
+   8998,
+   N'رسالة الطلب من المؤسسة',
+   1
+   )
+GO
 
-Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295721,68)
+
+Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,@CounterId,55)
+
+Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295773,68)
 
 ALTER view [etrade].[CustomsBusinessActivityDocumentsVw]
 AS
