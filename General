@@ -3,3 +3,54 @@ ADD  TemporaryRequestNumber VARCHAR(50) NULL;
 Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizationRequests','TemporaryRequestNumber',null,247,null)
 
 
+CustomsUserDoc
+ALTER TABLE [etrade].[CustomsSystemUserRequiredDocuments]
+DROP CONSTRAINT PK_CustomsSystemUserRequiredDocuments;
+ALTER TABLE [etrade].[CustomsSystemUserRequiredDocuments]
+DROP CONSTRAINT FK_CustomsSystemUserRequiredDocuments_CustomsBusinessActivities
+
+ALTER TABLE [etrade].[CustomsSystemUserRequiredDocuments]
+ADD Id INT IDENTITY(1,1) PRIMARY KEY;
+
+ALTER TABLE etrade.CustomsSystemUserRequiredDocuments
+Add   ServiceId  int null;
+ALTER TABLE  etrade.CustomsSystemUserRequiredDocuments
+ALTER COLUMN CustomsBusinessActivityId int NULL;
+Insert into etrade.CustomsSystemUserRequiredDocuments(CustomsBusinessActivityId,DocumentId,ServiceId) Values (null,332295721,68)
+
+
+alter view [etrade].[CustomsSystemUserRequiredDocumentsVw]
+AS
+Select cba.CustomsBusinessActivityId,cba.DocumentId, Name as [EngName], LocalDescription  as [AraName] ,cba.ServiceId
+From etrade.CustomsSystemUserRequiredDocuments cba
+				inner join Types tt on tt.TypeId = cba.DocumentId
+
+
+
+CustomsBusinessActivityDocs
+
+ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
+DROP CONSTRAINT FK_CustomsBusinessActivityDocuments_CustomsBusinessActivities;
+ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
+DROP CONSTRAINT PK_CustomsBusinessActivityDocuments
+
+ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
+ADD Id INT IDENTITY(1,1) PRIMARY KEY;
+
+ALTER TABLE etrade.CustomsBusinessActivityDocuments
+Add   ServiceId  int null;
+ALTER TABLE  etrade.CustomsBusinessActivityDocuments
+ALTER COLUMN CustomsBusinessActivityId int NULL;
+
+Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295737,55)
+
+
+ALTER view [etrade].[CustomsBusinessActivityDocumentsVw]
+AS
+Select cba.CustomsBusinessActivityId,cba.DocumentTypeId, Name as [EngName], LocalDescription  as [AraName] ,cba.ServiceId
+From etrade.CustomsBusinessActivityDocuments cba
+				inner join Types tt on tt.TypeId = cba.DocumentTypeId
+
+GO
+
+
