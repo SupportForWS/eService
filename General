@@ -44,6 +44,7 @@ ALTER COLUMN CustomsBusinessActivityId int NULL;
 
 Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295737,55)
 
+Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295721,68)
 
 ALTER view [etrade].[CustomsBusinessActivityDocumentsVw]
 AS
