@@ -4,127 +4,281 @@ Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizat
 
 
 
-CustomsBusinessActivityDocs
-
-ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
-DROP CONSTRAINT FK_CustomsBusinessActivityDocuments_CustomsBusinessActivities;
-ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
-DROP CONSTRAINT PK_CustomsBusinessActivityDocuments
-
-ALTER TABLE [etrade].[CustomsBusinessActivityDocuments]
-ADD Id INT IDENTITY(1,1) PRIMARY KEY;
-
-ALTER TABLE etrade.CustomsBusinessActivityDocuments
-Add   ServiceId  int null;
-ALTER TABLE  etrade.CustomsBusinessActivityDocuments
-ALTER COLUMN CustomsBusinessActivityId int NULL;
-
-declare @CounterId  int
-SELECT @CounterId= Max(cast(TypeId as int))+1 from [Types]
-INSERT INTO [dbo].[Types]
-           ([TypeId]
-           ,[TypeTypeId]
-           ,[Name]
-           ,[Description]
-           ,[DataProfileClassId]
-           ,[ParentId]
-           ,[Code]
-           ,[DateCreated]
-           ,[CreatedBy]
-           ,[DateModified]
-           ,[ModifiedBy]
-           ,[StateId]
-           ,[OwnerOrgId]
-           ,[OwnerLocId]
-           ,[LocalDescription]
-           ,[IsMandatory])
-     VALUES
-          (
-   @CounterId,
-   (select TypeId From types where name='BusinsessPartnerTypes'),
-   N'Request Letter By The Organization',
-   N'Request Letter By The Organization',
-   null, null, null,
-   GetDate(),
-   null, null, null,
-   'EserviceBusinessActivityDocumentTypesCreatedState',
-   29588,
-   8998,
-   N'رسالة الطلب من المؤسسة',
-   1
-   )
-GO
-
-
-Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,@CounterId,55)
-
-Insert into etrade.CustomsBusinessActivityDocuments(CustomsBusinessActivityId,DocumentTypeId,ServiceId) Values (null,332295773,68)
-
-ALTER view [etrade].[CustomsBusinessActivityDocumentsVw]
-AS
-Select cba.CustomsBusinessActivityId,cba.DocumentTypeId, Name as [EngName], LocalDescription  as [AraName] ,cba.ServiceId
-From etrade.CustomsBusinessActivityDocuments cba
-				inner join Types tt on tt.TypeId = cba.DocumentTypeId
-
-GO
-
-
-
 USE [MicroclearLight_July23]
 GO
-/****** Object:  StoredProcedure [etrade].[SubmitUserDeliveryDetails]    Script Date: 12/28/2023 8:43:39 PM ******/
+/****** Object:  StoredProcedure [etrade].[usp_BRS_MApp_UpdateUploadData]    Script Date: 1/1/2024 12:54:37 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+ALTER       procedure [etrade].[usp_BRS_MApp_UpdateUploadData]                  
+(                  
+@OrgReqId int,                  
+@OrgId int, --added newly              
+@Name nvarchar(1000),                  
+@IsImporterLic bit=0, --added newly              
+@ImporterLicNum nvarchar(100)=null, --added newly              
+@LicenseType int=null, --added newly              
+@IssuanceDate datetime=null, --added newly              
+@ExpiryDate datetime=null, --added newly              
+@DocumentType varchar(15),                  
+@DocumentName nvarchar(500), -- description                  
+@FileSize varchar(50),                  
+@FilePath nvarchar(1000),                  
+@ContentType varchar(200),                  
+@mUserId varchar(15),                  
+@EserviceRequestId int='0',                  
+                
+@UploadedFrom varchar(100)='',                
+@NewName nvarchar(1000) output                  
+                
+                
+)                  
+AS                  
+BEGIN                  
+                
+ Declare @DocTypeCode as Varchar(10)                  
+ DECLARE @InsertedRow TABLE (OrganizationRequestDocumentId INT)                  
+ Declare @FileNameWithPath nvarchar(1000),@CounterValueStart bigint,@CounterValueEnd bigint                  
+               
+ DECLARE @ISADMIN BIT = 0              
+  ,@ISSUBADMIN BIT = 0              
+  ,@Licensenumber NVARCHAR(150)              
+  --,@OrgLicenseNumber NVARCHAR(150)              
+  ,@ParentOrgTradeLicence NVARCHAR(150)              
+                
+SELECT @ISADMIN = ISADMIN              
+  ,@ISSUBADMIN = ISSUBADMIN              
+  ,@Licensenumber = LicenseNumber              
+  ,@ParentOrgTradeLicence=LicenseNumber              
+ FROM ETRADE.MobileUser              
+ WHERE UserId = @mUserId              
+              
+--SELECT @OrgLicenseNumber=TradeLicenseNumber FROM Organizations WHERE OrganizationId=@OrgId  --added newly              
+                  
+ exec dbo.usp_MCPKCounters @DataSourceName='ScanRequestUploadDocs',@SeedValue=1,@CounterValueStart = @CounterValueStart out, @CounterValueEnd = @CounterValueEnd out                  
+                  
+ Select @FileNameWithPath = @FilePath+'\'+left(@Name,LEN(@Name)-CHARINDEX('.',REVERSE(@Name)))+cast(@CounterValueStart as nvarchar(10))+Right(@Name,CHARINDEX('.',REVERSE(@Name)))                  
+                  
+                  
+ -- if(@UploadedFrom='BRSERenewalDocs' or )                
+   if(@UploadedFrom='BRSERenewalDocs'or @UploadedFrom='BRSEDeactivateDocs'or @UploadedFrom='BRSExamDOCS'or @UploadedFrom='BRStransferDOCS'or @UploadedFrom='BRSCancelDOCS' or @UploadedFrom='BRSISSUANCEDOCS'             
+      OR   @UploadedFrom='BRSPrintingCancelLicenseDOCS'        
+   OR   @UploadedFrom='BRSPrintingIssueLicenseDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeLicenseAddressDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeLicenseActivityDOCS'         
+   OR   @UploadedFrom='BRSPrintingReleaseBankGuaranteeDOCS'         
+   OR   @UploadedFrom='BRSPrintingGoodBehaveDOCS'         
+   OR   @UploadedFrom='BRSPrintingRenewLicenseDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeJobTitleAndRenewResidencyDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeJobTitleAndTransferResidencyDOCS'         
+   OR   @UploadedFrom='BRSPrintingRenewResidencyDOCS'         
+   OR   @UploadedFrom='BRSPrintingTransferResidencyDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeJobTitleDOCS'         
+   OR   @UploadedFrom='BRSPrintingChangeJobTitleWithCivilIdDOCS'          
+   OR   @UploadedFrom='BRSPrintingDeActivateLicenseDeathDOCS'         
+   OR   @UploadedFrom='BRSEShipmentAuthorizationDocs'          
+      OR   @UploadedFrom='BRSConsigneeUndertakingDOCS'         
+    OR   @UploadedFrom='housebill'       
+	or @UploadedFrom='CRFDetails'    
+	or @UploadedFrom='CurrecnyFormReference'
+    OR   @UploadedFrom='BRsOrganizationNameChangeDocs'         
+   OR   @UploadedFrom='BRsAddNewImportLicenseDocs'         
+   OR   @UploadedFrom='BRsRenewImportLicenseDocs'         
+   OR   @UploadedFrom='BRsRenewCommercialLicenseDocs'         
+   OR   @UploadedFrom='BRsRenewIndustrialLicenseDocs'         
+   OR   @UploadedFrom='BRsChangeCommercialAddressDocs'          
+   OR   @UploadedFrom='BRsAddNewAuthorizedSignatoryDocs'         
+   OR   @UploadedFrom='BRsRenewAuthorizedSignatoryDocs'          
+      OR   @UploadedFrom='BRsRemoveAuthorizedSignatoryDocs'         
+    OR   @UploadedFrom='hbdocumenttypes'    
+    OR   @UploadedFrom='BrsAccountCancelDocs'   
 
+	---Org Request change from siraj
+     OR   @UploadedFrom='EserviceAccountCancelDocs'     
+    OR   @UploadedFrom='EserviceAccountUpdateDocs'     
+    OR   @UploadedFrom='EserviceOrganizationNameChangeDocs'     
+    OR   @UploadedFrom='EserviceImportLicenseDocs'        
+    OR   @UploadedFrom='EserviceRenewCommercialLicenseDocs'     
+    OR   @UploadedFrom='EserviceRenewIndustrialLicenseDocs'     
+    OR   @UploadedFrom='EserviceChangeCommercialAddressDocs'     
+   OR   @UploadedFrom='EserviceAuthorizedSignatoryDocs'  
+     OR   @UploadedFrom='BusinessActivityDocs'     
+    OR   @UploadedFrom='BankGuaranteeEserviceDocs'     
+   OR   @UploadedFrom='CustomsSystemUserDocs'  
+  )              
+  begin                 
+         PRINT   @UploadedFrom         
+ INSERT INTO dbo.[ScanRequestUploadDocs] ([DocumentId],[DocumentType],[DocumentURL],[ReferenceId],[DocumentName],[StateId],[CreatedBy],                  
+ [DateCreated],[FileData],[NewFileName],[Description],[ReferenceType],[DeclarationDocumentType],[Reviewed],[DeclarationId],                  
+ [ScanDocRequestId],[RecCreatedBy],[ReqCreatedRole],[UploadedFrom],NewFileName_dfs)--,EserviceRequestId)                  
+ VALUES(@CounterValueStart,'DD',NULL,0,@DocumentName,'ScanRequestUploadDocsCreated',@mUserId,getdate(),NULL,@FilePath,N'','M', @DocumentType,'No',@EserviceRequestId,NULL,'MicroClear','',@UploadedFrom,@FilePath)--,@EserviceRequestId)                  
+                  
+   Select @NewName = left(@Name,LEN(@Name)-CHARINDEX('.',REVERSE(@Name)))+cast(@CounterValueStart as nvarchar(10))+Right(@Name,CHARINDEX('.',REVERSE(@Name)))                  
+ Select @DocTypeCode=Code From Types where TypeId =ISNULL(@DocumentType,-1)                  
+ Select @CounterValueStart as OrganizationRequestDocumentId,              
+ @OrgReqId As OrganizationRequestId, @NewName FileNewName,@DocumentType AS DocumentType,@DocTypeCode as DocumentTypeCode,              
+               
+  SUBSTRING(@DocumentName,1,(CHARINDEX('.',@DocumentName + '.')-1)) As  DocumentName,'Success' UploadStatus,'Encryptedid' as Encryptedid ,'FileUploadResult' as "TableName"                   
+ -- SUBSTRING(@DocumentName,1,(CHARINDEX('.',@DocumentName + '.')-1))                 
+                  
+                  
+  end                 
+                  
+  else                
+  begin                 
+                  
+ --if(not Exists (Select 1 From etrade.OrganizationRequests Where OrganizationRequestId=@OrgReqId and CreatedBy = @mUserId))                  
+  If((@OrgId is  null or @OrgId =0) and not Exists(Select top 1 1 from etrade.OrganizationRequests where  OrganizationRequestId =@OrgReqId               
+ --and CreatedBy =@mUserid )--commented Siraj               
+ and (CreatedBy =@mUserid or @ISADMIN=1 or @ISSUBADMIN=1)          
+  --and ParentOrgTradeLicence=@ParentOrgTradeLicence -- Commenting this line in sp, its decided to skip changes in Org registration module and go with only broker services          
+ ) )--added Siraj -- modified to get details of requests which was not created by logged in admin user              
+              
+ Begin                  
+  Select '' as OrganizationRequestDocumentId,@OrgReqId As OrganizationRequestId, '' FileNewName,@DocumentType AS DocumentType,@DocumentName As  DocumentName,'-1' UploadStatus,'FileUploadResult' as "TableName"                    
+   print('here')               
+                  
+  return;                  
+ End                  
+                   
+     IF(@IsImporterLic=1)              
+     BEGIN              
+     IF(@OrgId is  null or @OrgId =0)--ADDED NEWLY              
+     BEGIN              
+     SET @EserviceRequestId=@EserviceRequestId              
+     END              
+     ELSE              
+     BEGIN              
+     SET @EserviceRequestId=null              
+     END              
+     END              
+                   
+ INSERT INTO dbo.[ScanRequestUploadDocs] ([DocumentId],[DocumentType],[DocumentURL],[ReferenceId],[DocumentName],[StateId],[CreatedBy],                  
+ [DateCreated],[FileData],[NewFileName],[Description],[ReferenceType],[DeclarationDocumentType],[Reviewed],[DeclarationId],                  
+ [ScanDocRequestId],[RecCreatedBy],[ReqCreatedRole],[UploadedFrom],NewFileName_dfs)--,EserviceRequestId)                  
+ VALUES(@CounterValueStart,'DD',NULL,0,@DocumentName,'ScanRequestUploadDocsCreated','MicroClear',getdate(),NULL,@FilePath,N'','M', @DocumentType,'No',@OrgReqId,NULL,'MicroClear','','OrganizationRequests',@FilePath)--,@EserviceRequestId)                  
+                   
+       IF(@IsImporterLic=1)              
+     BEGIN        
+       IF(@OrgId is  null or @OrgId =0)--ADDED NEWLY              
+     BEGIN              
+     SET @OrgReqId=@OrgReqId              
+     END              
+     ELSE              
+     BEGIN              
+     SET @OrgReqId=0              
+     END              
+     END              
+                   
+         --select * from [etrade].OrganizationRequestDocuments           
+                   
+         --ALTER TABLE [etrade].OrganizationRequestDocuments            
+         --ADD     OrganizationId BIGINT DEFAULT NULL,LicenseNumber NVARCHAR(150) DEFAULT NULL,DocStateCode INT DEFAULT NULL,DocState NVARCHAR(150) DEFAULT NULL,Sync BIT DEFAULT NULL,IssuanceDate DATETIME DEFAULT NULL,ExpiryDate DATETIME DEFAULT NULL     
  
-ALTER proc [etrade].[SubmitUserDeliveryDetails]  
-@EserviceRequestId bigint,
-@EserviceRequestState VARCHAR(100) as Declare @MCPersonalId BIGINT = 0,@MCUserId VARCHAR(50) = '' Declare @Password varchar(100) = NULL,  @EmailId VARCHAR(50),@EServiceRequestNumber VARCHAR(50) = '' DECLARE @SId  VARCHAR(100) ,@sWhere VARCHAR(1000) 
-DECLARE  @RequestNumber VARCHAR(100)
-
-SELECT @MCPersonalId=MCPersonalId,@MCUserId=UserId,@EmailId=EMail  
-FROM  [etrade].[EServiceRequestsDetails] 
-WHere [EserviceRequestId] = @EserviceRequestId 
-
-Select @RequestNumber =EServiceRequestNumber
-FROM  [etrade].[EServiceRequests] 
-WHere [EserviceRequestId] = @EserviceRequestId 
-IF(@EserviceRequestState = 'Delivered') 
-
-BEGIN 
-/*******************-On Delivered action-*******************/ 
-SELECT @EServiceRequestNumber = EServiceRequestNumber
-FROM eTrade.EServiceRequests 
-WHERE EServiceRequestId = @EServiceRequestId 
-
-Select @Password=[Password] from Users where PersonalId=@MCPersonalId 
-
-INSERT INTO [KGACEmailOutSyncQueue] 
-
-( [Sync],[MsgType],[UserId],[Pass],[TOEmailAddress],[CCEmailAddress],[BCCEmailAddress], 
-[Consignee],[SampleRequestNo],[DeclNo],[DateCreated],[DateModified], [Status],[msgtypeName],[ConsigneeId],[MailPriority],[TempDeclNumber]) 
-VALUES
-( 0,'EMAILForESNewUserReqWithPassword',@MCUserId,@Password,@EmailId,'','', @MCPersonalId,'',@EServiceRequestNumber,GETDATE(),GETDATE(), 'Created',NULL, @MCPersonalId,'Normal',@EServiceRequestNumber ) 
-
-UPDATE People SET [StateId]  = 'AwaitingPswdAcknowledgement', [DateModified] = GETDATE(), [ModifiedBy] = 'eservice' Where PersonalId = @MCPersonalId SET  @SId=NEWID() SET  @sWhere='WHERE PersonalId = ''' + CONVERT(VARCHAR, @MCPersonalId) + ''''; EXEC usp_LogInAuditEx @sProfileName='People', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID= @SId UPDATE [dbo].[Users] SET [StateId]  = 'AwaitingPswdAcknowledgement', [DateModified] = GETDATE(), [ModifiedBy] = 'eservice' Where PersonalId = @MCPersonalId SET  @sWhere='Where PersonalId = ''' + CONVERT(VARCHAR(50), @MCPersonalId)+ ''''; EXEC usp_LogInAuditEx @sProfileName='Users', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID = @SId END ELSE BEGIN 
-
-/*******************-On Completion action-*******************/ 
-UPDATE [dbo].[People] SET StateId='PeopleActivatedState', ModifiedBy='eservice', DateModified=GETDATE() WHERE PersonalId=@MCPersonalId SET  @SId=NEWID() SET  @sWhere='WHERE PersonalId = ''' + CONVERT(VARCHAR, @MCPersonalId) + ''''; EXEC usp_LogInAuditEx @sProfileName='People', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID= @SId UPDATE [dbo].[Users] SET StateId='UsersActivatedState', AccountStatus='y', ModifiedBy='eservice', DateModified=GETDATE() WHERE PersonalId=@MCPersonalId SET  @sWhere='Where PersonalId = ''' + CONVERT(VARCHAR(50), @MCPersonalId)+ ''''; EXEC usp_LogInAuditEx @sProfileName='Users', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID = @SId END
-
-   UPDATE [dbo].[OrgUserActivities]         
-   SET StateId='OrgUserActivitiesActiveState',      
-       ModifiedBy='eservice',        
-       DateModified=GETDATE()        
-   WHERE PersonalId=@MCPersonalId  --@MCPersonalId was already declared in existing code
-
-   SET @sWhere='Where PersonalId ='+ CONVERT(VARCHAR(50), @MCPersonalId);  
-  EXEC usp_LogInAuditEx 
-			@sProfileName='OrgUserActivities',
-			@sWhere= @sWhere,
-			@CurrUserId='eservice',
-			@ClientIP = '127.0.0.1',
-			@AppSessionID = @SId
+     
+     
+                   
+                   
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__Organ__5BA29287;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__Licen__5C96B6C0;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__DocSt__5D8ADAF9;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__DocSt__5E7EFF32;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizati__Sync__5F73236B;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__Issua__606747A4;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP CONSTRAINT DF__Organizat__Expir__615B6BDD;        
+                   
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN OrganizationId;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN LicenseNumber;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN DocStateCode;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN DocState;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN Sync;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN IssuanceDate;        
+           --ALTER TABLE [etrade].OrganizationRequestDocuments DROP COLUMN ExpiryDate;        
+              
+   Insert [etrade].OrganizationRequestDocuments ( [OrganizationRequestId], [DocumentType], [DocumentName], [FileNameWithPath], [FileSizeInKB],                   
+ [DateCreated], [CreatedBy], [StateId],[ScanRequestUploadDocId])--,               
+ --OrganizationId,LicenseNumber,DocStateCode,DocState,Sync,IssuanceDate,ExpiryDate)     --added newly              
+ OUTPUT inserted.OrganizationRequestDocumentId                  
+ Into  @InsertedRow                  
+ Values ( @OrgReqId, @DocumentType, @DocumentName, @FilePath, @FileSize, GETDATE(), @mUserId,'OrgReqDocumentsCreatedState',@CounterValueStart)--,              
+ --@OrgId,@ImporterLicNum,1,'Uploaded',0 ,@IssuanceDate ,@ExpiryDate)    --added newly              
+              
+ --//added below  IF BLOCK newly              
+ if(@IsImporterLic=1)              
+ begin              
+               
+ IF  EXISTS( SELECT 1 FROM [etrade].[OrgRequestsImporterLicense] WHERE [ImporterLicenseNo]=@Licensenumber AND OrganizationId =@OrgId and DocState='1' )--and LicenseExpiryDate<=GETDATE() )              
+--overwrite exiting doc for same license number of the company -- added newly              
+BEGIN              
+              
+Update [etrade].OrgRequestsImporterLicense               
+     Set StateId='OrgReqDocumentsDeleated',DocState='0',sync=null,ModifiedBy=@mUserId,DateModified=GETDATE()              
+   where OrganizationRequestDocumentid = (SELECT OrganizationRequestDocumentid FROM [etrade].[OrgRequestsImporterLicense] WHERE [ImporterLicenseNo]=@Licensenumber AND OrganizationId =@OrgId and DocState='1')              
+END              
+IF(@LicenseType=19)              
+BEGIN              
+SET @ImporterLicNum= CONVERT(varchar, YEAR(@IssuanceDate))+'/'+@ImporterLicNum              
+END              
+              
+INSERT INTO [etrade].[OrgRequestsImporterLicense]              
+          ([OrganizationRequestId]              
+           ,[OrganizationId]              
+        ,OrganizationRequestDocumentId              
+           ,[ImporterLicenseNo]              
+           ,DocumentType              
+           ,[ImporterLicenseType]              
+           ,[ImporterLicenseTypeDesc]              
+           ,[LicenseIssueDate]              
+           ,[LicenseExpiryDate]              
+           ,[LicValidated]              
+           ,[DocState]              
+           ,DocumentName              
+           ,[FileNamewithPath]              
+           ,ScanRequestUploadDocId              
+           ,[Sync]              
+           ,[StateId]              
+           ,[DateCreated]              
+           ,[CreatedBy]              
+           ,[DateModified]              
+           ,[ModifiedBy])              
+     VALUES              
+           (@OrgReqId              
+           ,@OrgId              
+           ,(select OrganizationRequestDocumentId from @InsertedRow)              
+           ,@ImporterLicNum              
+   ,@DocumentType              
+           ,@LicenseType              
+           ,null              
+           ,@IssuanceDate              
+           ,@ExpiryDate              
+           ,0              
+           ,'1'              
+           ,@DocumentName              
+           ,@FileNameWithPath              
+           ,@CounterValueStart              
+           ,0              
+           ,'OrgReqDocumentsCreatedState'              
+           ,GETDATE()              
+           ,@mUserId              
+           ,null              
+    ,null)              
+                  
+                  
+               
+ end              
+                  
+ Select @NewName = left(@Name,LEN(@Name)-CHARINDEX('.',REVERSE(@Name)))+cast(@CounterValueStart as nvarchar(10))+Right(@Name,CHARINDEX('.',REVERSE(@Name)))                  
+ Select @DocTypeCode=Code From Types where TypeId =ISNULL(@DocumentType,-1)                  
+ Select OrganizationRequestDocumentId,@OrgReqId As OrganizationRequestId, @NewName FileNewName,@DocumentType AS DocumentType,@DocTypeCode as DocumentTypeCode,              
+               
+SUBSTRING(@DocumentName,1,(CHARINDEX('.',@DocumentName + '.')-1)) As  DocumentName,'Success' UploadStatus,'Encryptedid' as Encryptedid ,'FileUploadResult' as "TableName"  From @InsertedRow                  
+                   
+                  
+                   
+   end                 
+                  
+                
+END              
 
 
