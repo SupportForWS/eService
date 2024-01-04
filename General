@@ -4,6 +4,14 @@ Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizat
 
 
 
-delete from etrade.CustomsBusinessActivityDocuments where DocumentTypeId = 332295778
-
+ var CustomsBusinessActivites = await _IeServicesUnitOfWork.OrganizationBGDetailsRepository
+     .Get()
+     .Where(a => a.OrganizationId == _UserOrganizationId && 
+                 !string.IsNullOrEmpty(a.OrganizationCustomsBusinessActivityId.ToString()) && (
+                 a.StateId == OrganizationBankGuaranteeStatusEnum.InitialReleased.GetEnumDescription() ||
+                 a.StateId == OrganizationBankGuaranteeStatusEnum.Released.GetEnumDescription() ||
+                 a.StateId == OrganizationBankGuaranteeStatusEnum.Seized.GetEnumDescription()))
+     .OrderByDescending(a => a.OrgBGDetailId)
+     .Select(a => a.OrganizationCustomsBusinessActivityId)
+     .ToListAsync();
 
