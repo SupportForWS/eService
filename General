@@ -4,14 +4,28 @@ Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizat
 
 
 
- var CustomsBusinessActivites = await _IeServicesUnitOfWork.OrganizationBGDetailsRepository
-     .Get()
-     .Where(a => a.OrganizationId == _UserOrganizationId && 
-                 !string.IsNullOrEmpty(a.OrganizationCustomsBusinessActivityId.ToString()) && (
-                 a.StateId == OrganizationBankGuaranteeStatusEnum.InitialReleased.GetEnumDescription() ||
-                 a.StateId == OrganizationBankGuaranteeStatusEnum.Released.GetEnumDescription() ||
-                 a.StateId == OrganizationBankGuaranteeStatusEnum.Seized.GetEnumDescription()))
-     .OrderByDescending(a => a.OrgBGDetailId)
-     .Select(a => a.OrganizationCustomsBusinessActivityId)
-     .ToListAsync();
+ USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[GetCommercialLic]    Script Date: 1/8/2024 3:13:33 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER procedure [etrade].[GetCommercialLic]
+ 
+(@OrganizationId int,
+@MociCommercialLicSubType NVARCHAR (20) = null
+)    
+As
+Begin
+Select 
+O.CommercialLicenseNo ,
+MT.Description as CommercialLicType,
+(select Description from MOCITypes where 
+TypeId =@MociCommercialLicSubType ) as MOCICommercialLicType
 
+from Organizations O
+Left join MOCITypes MT on MT.TypeId = O.CommercialLicenseSubType
+Where O.OrganizationId =@OrganizationId
+
+end
