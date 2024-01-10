@@ -1,8 +1,11 @@
-طلب جديد
-في انتظار الموافقة
-اكتمل التفويض
-في انتظار مصادقة مقدم الطلب (المفوِض)
-في انتظار مصادقة المفوض له
-تم رفض طلب المصادقة من قبل مقدم الطلب (المفوِض)
-تم رفض طلب المصادقة من قبل المفوض له
-تم رفض طلب المصادقة من قبل الطرفين
+New
+Pending Authorization
+Authorization Completed
+Approved
+Expired
+Cancelled
+Pending Requester Approval
+Pending Authorizer Approval
+Authorization Rejected By Requester
+Authorization Rejected By Authorizer
+Authorization Rejected By Both Parties
