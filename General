@@ -5,3 +5,4 @@ Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizat
 
 
              
+Update types set LocalDescription =N'خطاب الكفالة المصرفية' where typeid = 332295777
