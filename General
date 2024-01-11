@@ -5,4 +5,18 @@ Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizat
 
 
              
-Update types set LocalDescription =N'خطاب الكفالة المصرفية' where typeid = 332295777
+ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
+
+AS
+
+Select Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,BAS.ValueEnglish as StatusEnglishName ,BAS.ValueArabic as StatusArabicName
+
+From OrgUserActivities oa
+left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
+left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
+
+ 
+
+
+GO
+
