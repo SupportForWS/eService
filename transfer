@@ -1,11 +1,9 @@
-New
-Pending Authorization
-Authorization Completed
-Approved
-Expired
-Cancelled
-Pending Requester Approval
-Pending Authorizer Approval
-Authorization Rejected By Requester
-Authorization Rejected By Authorizer
-Authorization Rejected By Both Parties
+
+                       List<int> businessActivitiesList = await _IeServicesUnitOfWork.EServiceRequestsCustomsActivityRepository.Get()
+                           .Where(x => x.EServiceRequestsId == serviceRequestDetails.EserviceRequestId)
+                           .Select(x => x.CustomsBusinessUserActivityId)
+                           .ToListAsync();
+
+                        var activitesDetails = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository.Get()
+                            .Where(a => a.OrganizationId == _UserOrganizationId)
+                            .ToListAsync();
