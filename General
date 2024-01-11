@@ -17,6 +17,17 @@ left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
 GO
 
 
+USE [MicroclearLight_July23]
+GO
+
+/****** Object:  View [etrade].[OrganizationCustomsBusinessActivities_BPN]    Script Date: 1/11/2024 11:15:11 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
 ALTER view [etrade].[OrganizationCustomsBusinessActivities_BPN]
 AS
 Select oa.OrganizationActivityId AS Id, oa.OrganizationId AS OrganizationId, oa.ActivityId AS CustomsBusinessActivityId,
@@ -25,9 +36,25 @@ CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN Cast(1 as BIGINT
 	WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN Cast(3 as BIGINT) 
 	WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN Cast(4 as BIGINT) 
 END AS StatusId, 
+BAS.ValueEnglish as StatusEnglishName,
+BAS.ValueArabic as StatusArabicName,
 ESR.OperatorCode AS OperatorCode, ESR.AirCustomsDepartment AS AirCustomsDepartment, ESR.SeaCustomsDepartment AS SeaCustomsDepartment, ESR.LandCustomsDepartment AS LandCustomsDepartment, 
 oa.CreatedBy AS CreatedById, oa.DateCreated AS CreatedAt, NULL AS LastModifiedById, NULL AS LastModifiedAt, NULL AS DeactivatedById, NULL AS DeactivatedAt,
 CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN 1 ELSE 0 END AS IsActive
+
+
 From OrganizationActivities oa
 LEFT join eTrade.eServiceRequestsDetails ESR ON oa.eServiceRequestId = ESR.EServiceRequestId  
+left join etrade.CustomsBusinessActivityStatuses BAS on BAS.Id = CASE
+        WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN CAST(1 AS BIGINT)
+        WHEN oa.StateId = 'OrganizationActivitiesDeActivatedState' THEN CAST(2 AS BIGINT)
+        WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN CAST(3 AS BIGINT)
+        WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN CAST(4 AS BIGINT)
+        ELSE NULL  -- Add a default condition if needed
+
+    END;
+
+GO
+
+
 
