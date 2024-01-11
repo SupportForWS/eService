@@ -14,9 +14,20 @@ Select Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.ActivityId as Custom
 From OrgUserActivities oa
 left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
 left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
-
- 
-
-
 GO
+
+
+ALTER view [etrade].[OrganizationCustomsBusinessActivities_BPN]
+AS
+Select oa.OrganizationActivityId AS Id, oa.OrganizationId AS OrganizationId, oa.ActivityId AS CustomsBusinessActivityId,
+CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN Cast(1 as BIGINT)
+	WHEN oa.StateId = 'OrganizationActivitiesDeActivatedState' THEN Cast(2 as BIGINT) 
+	WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN Cast(3 as BIGINT) 
+	WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN Cast(4 as BIGINT) 
+END AS StatusId, 
+ESR.OperatorCode AS OperatorCode, ESR.AirCustomsDepartment AS AirCustomsDepartment, ESR.SeaCustomsDepartment AS SeaCustomsDepartment, ESR.LandCustomsDepartment AS LandCustomsDepartment, 
+oa.CreatedBy AS CreatedById, oa.DateCreated AS CreatedAt, NULL AS LastModifiedById, NULL AS LastModifiedAt, NULL AS DeactivatedById, NULL AS DeactivatedAt,
+CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN 1 ELSE 0 END AS IsActive
+From OrganizationActivities oa
+LEFT join eTrade.eServiceRequestsDetails ESR ON oa.eServiceRequestId = ESR.EServiceRequestId  
 
