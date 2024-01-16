@@ -1,21 +1,24 @@
  CREATE  TABLE #temp_orgactivity(activityid int) ;
  insert into #temp_orgactivity (activityid)
  select activityid FROM OrgUserActivities where personalid=1861128;
-select * from  #temp_orgactivity 
-DROP TABLE #temp_orgactivity;
+--select * from  #temp_orgactivity 
 
-SELECT *
-FROM OrgUserActivities where personalid=1861104;
+--SELECT DISTINCT  *
+--FROM OrgUserActivities where personalid=1861104;
  select 
 
  ORGAct.ActivityId,
  BA.NameArabic as ActivityNameArabic,
  Ba.NameEnglish as ActivityNameEngkish,
- case
-  when  ORGAct.ActivityId if exists (#temp_orgactivity) then 'Added'
-  else 'Removed' as RequestStatus
-
+ 
+ CASE
+        WHEN TOA.activityid IS NOT NULL THEN 'Added'
+        ELSE 'Removed'
+    END AS RequestStatus
  
  from [$OrgUserActivities] ORGAct 
  left join etrade.CustomsBusinessActivities_BPN BA on BA.Id = ORGAct.ActivityId
+ LEFT JOIN #temp_orgactivity TOA ON TOA.activityid = ORGAct.ActivityId
+
  where personalid=1861104 order by registereddate desc
+ DROP TABLE #temp_orgactivity;
