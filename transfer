@@ -10,7 +10,11 @@ FROM OrgUserActivities where personalid=1861104;
 
  ORGAct.ActivityId,
  BA.NameArabic as ActivityNameArabic,
- Ba.NameEnglish as ActivityNameEngkish
+ Ba.NameEnglish as ActivityNameEngkish,
+ case
+  when  ORGAct.ActivityId if exists (#temp_orgactivity) then 'Added'
+  else 'Removed' as RequestStatus
+
  
  from [$OrgUserActivities] ORGAct 
  left join etrade.CustomsBusinessActivities_BPN BA on BA.Id = ORGAct.ActivityId
