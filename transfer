@@ -1,9 +1,17 @@
+ CREATE  TABLE #temp_orgactivity(activityid int) ;
+ insert into #temp_orgactivity (activityid)
+ select activityid FROM OrgUserActivities where personalid=1861128;
+select * from  #temp_orgactivity 
+DROP TABLE #temp_orgactivity;
 
-                       List<int> businessActivitiesList = await _IeServicesUnitOfWork.EServiceRequestsCustomsActivityRepository.Get()
-                           .Where(x => x.EServiceRequestsId == serviceRequestDetails.EserviceRequestId)
-                           .Select(x => x.CustomsBusinessUserActivityId)
-                           .ToListAsync();
+SELECT *
+FROM OrgUserActivities where personalid=1861104;
+ select 
 
-                        var activitesDetails = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository.Get()
-                            .Where(a => a.OrganizationId == _UserOrganizationId)
-                            .ToListAsync();
+ ORGAct.ActivityId,
+ BA.NameArabic as ActivityNameArabic,
+ Ba.NameEnglish as ActivityNameEngkish
+ 
+ from [$OrgUserActivities] ORGAct 
+ left join etrade.CustomsBusinessActivities_BPN BA on BA.Id = ORGAct.ActivityId
+ where personalid=1861104 order by registereddate desc
