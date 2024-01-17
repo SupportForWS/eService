@@ -1,24 +1,31 @@
- CREATE  TABLE #temp_orgactivity(activityid int) ;
- insert into #temp_orgactivity (activityid)
- select activityid FROM OrgUserActivities where personalid=1861128;
---select * from  #temp_orgactivity 
 
---SELECT DISTINCT  *
---FROM OrgUserActivities where personalid=1861104;
- select 
+/****** Object:  View [etrade].[CustomsSystemUserActivities_BPN]    Script Date: 1/17/2024 11:58:36 AM ******/
+SET ANSI_NULLS ON
+GO
 
- ORGAct.ActivityId,
- BA.NameArabic as ActivityNameArabic,
- Ba.NameEnglish as ActivityNameEngkish,
- 
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+/* View created to replace the table object "etrade.CustomsSystemUserActivities" and use it as view 
+
+"etrade.CustomsSystemUserActivities", team shall rename the view name.*/
+
+ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
+
+AS
+
+Select distinct Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,
  CASE
-        WHEN TOA.activityid IS NOT NULL THEN 'Added'
-        ELSE 'Removed'
+        WHEN oa.ActivityId exists( select activityid FROM OrgUserActivities) THEN 'Added' --added
+        ELSE 'Removed'--removed
     END AS RequestStatus
- 
- from [$OrgUserActivities] ORGAct 
- left join etrade.CustomsBusinessActivities_BPN BA on BA.Id = ORGAct.ActivityId
- LEFT JOIN #temp_orgactivity TOA ON TOA.activityid = ORGAct.ActivityId
 
- where personalid=1861104 order by registereddate desc
- DROP TABLE #temp_orgactivity;
+From OrgUserActivities oa
+left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
+left join [$OrgUserActivities] AuOa on  AuOa.PersonalId =oa.PersonalId
+ 
+ where oa.PersonalId= 1861104
+
+GO
+
