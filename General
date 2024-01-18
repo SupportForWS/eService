@@ -16,5 +16,19 @@ BA.NameArabic as ActivityNameArabic
 left join etrade.CustomsBusinessActivities_BPN BA on BA.Id =ob.CustomsBusinessActivityId
 
 
+USE [Microclearlight_BPMigration]
+GO
+
+DECLARE	@return_value int
+
+EXEC	@return_value = [etrade].[usp_BRS_MApp_GetNotificationsList]
+		@mUserId = 5699,
+		@lang = N'ar'
+
+SELECT	'Return Value' = @return_value
+
+GO
+
+
 
 
