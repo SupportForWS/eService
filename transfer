@@ -1,31 +1,42 @@
-
-/****** Object:  View [etrade].[CustomsSystemUserActivities_BPN]    Script Date: 1/17/2024 11:58:36 AM ******/
+USE [Microclearlight_BPMigration]
+GO
+/****** Object:  Table [etrade].[PortListForIndividualAuthorization]    Script Date: 1/18/2024 9:56:21 AM ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-
-/* View created to replace the table object "etrade.CustomsSystemUserActivities" and use it as view 
-
-"etrade.CustomsSystemUserActivities", team shall rename the view name.*/
-
-ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
-
-AS
-
-Select distinct Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,
- CASE
-        WHEN oa.ActivityId exists( select activityid FROM OrgUserActivities) THEN 'Added' --added
-        ELSE 'Removed'--removed
-    END AS RequestStatus
-
-From OrgUserActivities oa
-left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
-left join [$OrgUserActivities] AuOa on  AuOa.PersonalId =oa.PersonalId
- 
- where oa.PersonalId= 1861104
-
+CREATE TABLE [etrade].[PortListForIndividualAuthorization](
+	[PortId] [int] NOT NULL,
+	[PortTypeId] [int] NOT NULL,
+	[EnglishName] [varchar](500) NULL,
+	[ArabicName] [nvarchar](500) NULL,
+	[PortCode] [varchar](10) NOT NULL,
+	[ParentId] [int] NULL,
+ CONSTRAINT [PK_PortListForIndividualAuthorization] PRIMARY KEY CLUSTERED 
+(
+	[PortId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SECONDARY]
+) ON [SECONDARY]
 GO
-
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (8998, 33223958, N'KUWAIT INTNL.AIRPORT', N'إدارة جمارك الشحن الجوي', N'KWI', 1)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (712358, 33223961, N'SHUAIBA', N'ميناء الشعيبة', N'KWSAA', 2)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (712360, 33223961, N'SHUWAIKH', N'ميناء الشويخ', N'KWSWK', 3)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7050802, 33223960, N'SULAIBIYA CUSTOMS AND VEGETABLE MARKET ADMINISTRATION', N'إدارة جمارك الصليبية وشبرة الخضار', N'KWVGM', 4)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7050807, 33223960, N'ABDELI', N'إدارة جمارك العبدلي وخباري العوازم', N'KWABD', 5)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7050811, 33223961, N'DOHA', N'ميناء الدوحة', N'KWDOH', 6)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7050846, 33223960, N'SALMI (KUWAIT)', N'إدارة جمارك السالمي', N'KWSAL', 7)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7050847, 33223960, N'NUWAISEEB(KUWAIT)', N'إدارة جمارك النويصيب', N'KWNUW', 8)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (7051032, 33223961, N'PUBLIC AND PRIVATE CUSTOMS WAREHOUSES ADMINISTRATION', N'إدارة المستودعات الجمركية العامة والخاصة', N'KWBWS', 9)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (89981235, 33223958, N'HITEEN', N'مراقبة الطرود البريدية - حطين', N'HTN', 10)
+GO
+INSERT [etrade].[PortListForIndividualAuthorization] ([PortId], [PortTypeId], [EnglishName], [ArabicName], [PortCode], [ParentId]) VALUES (89981277, 33223958, N'AL SEDEEK CENTER', N'مراقبة الطرود البريدية - الصديق', N'SDK', 11)
+GO
