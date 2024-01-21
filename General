@@ -1,10 +1,467 @@
-   case 
-									   when @serviceid in(31,28) and @lang ='eng'
-									   then
-									   ers.RequesterEnglishName
-									   else 
-									   ers.RequesterArabicName
-									   end
-									   AS parentname            
-                                       --RequestForName as BrokerEnglishName,            
-                                       ers.CivilID, 
+USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[usp_GetGenBrokerDetailsforBRSEservice]    Script Date: 1/21/2024 7:11:40 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--sp_helptext 'etrade.usp_GetGenBrokerDetailsforBRSEservice'
+
+
+
+ ALTER             PROCEDURE [etrade].[usp_GetGenBrokerDetailsforBRSEservice]                  
+(              
+  @OrganizationId Varchar(50)=''  
+  ,@serviceid int  =''    
+ , @eservicerequestid int ='' ,     
+  @lang Varchar(5)='' 
+   ,
+
+  @ExamPassedBrokerOnly varchar(10)='no',
+  @MobileUserid bigint =0,
+  @ChildOrgId int =0
+           
+                
+)                  
+  
+AS                  
+BEGIN                  
+  PRINT 'gen broker sp ='+@ExamPassedBrokerOnly
+              
+SET NOCOUNT ON;               
+      
+	  if(@ExamPassedBrokerOnly='yes')
+
+	  BEGIN
+	  PRINT 'exam passed broker block'
+	   select distinct   ' 'BankCode,  
+    isnull(ED.EnglishFirstName,'')+' '+isnull(ED.EnglishSecondName,'')+' '+isnull(ED.EnglishThirdName,'')+' '+isnull(ED.EnglishLastName,'') as BrokerEnglishName,    
+  '' BrokerOrgId,         
+          
+  '' BTEng,        
+ --ISNULL(T_ara.Name,T.Name)    AS BrokerType,     
+  case when @lang='ar' then  ISNULL(T.LocalDescription, T.Name) else ISNULL(T.Name, T.LocalDescription) end   AS BrokerType,       
+'' StateName,''StateId,        
+  '' AS [Status],           
+  '' as BrokerCode,        
+  isnull(ED.ArabicFirstName,'')+' '+isnull(ED.Arabicsecondname,'')+' '+isnull(ED.arabicthirdname,'')+' '+isnull(ED.arabiclastname,'') AS BrokerNameAra,        
+  ED.CivilId CivilId,        
+  -- bod.IDExpiryDate As CivilIdExpiryDate,        
+    
+    
+ -- CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103) As CivilIdExpiryDate,  
+  
+  
+--isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103)) As CivilIdExpiryDate,  
+  
+  
+isnull(CONVERT(VARCHAR(10),  ED.CivilIDExpiryDate, 103),'') As CivilIdExpiryDate,    --qasem
+  
+-- isnull(isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103),'1900-01-01 00:00:00.000'))  As CivilIdExpiryDate,  
+   
+  
+   
+    
+  ED.PassportNo as PassportNo,         --qasem
+  
+  -- case when isnull(isnull(ers.PassportNo,bod.PassportNo),'')='NULL' then '' else isnull(isnull(ers.PassportNo,bod.PassportNo),'') end as PassportNo,  
+  -- isnull(bod.PassportExpiryDate,'1900-01-01 00:00:00.000') As PassportExpirydate,        
+    
+ -- bod.PassportExpiryDate as PassportExpirydate,  
+--CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)  As TestPassportExpirydate,  
+    
+-- isnull(CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103),'1900-01-01 00:00:00.000')  As PassportExpirydate,  
+   
+   
+    
+ isnull(CONVERT(VARCHAR(10),  ED.PassportExpiryDate, 103),'') As PassportExpirydate,    --qasem
+    
+-- isnull(CONVERT(VARCHAR(10),  ers.PassportExpiryDate, 103),CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)) As PassportExpirydate,  
+  
+   
+ED.Nationality AS Nationality,        
+         
+         
+          
+  --Broker License Details              
+  '' As BrokerLicenseNo,        
+  '' As LicenseIssueDate,        
+  '' As BrokerFileNumber,        
+ -- bld.DtOfExpiry As LicenseExpiryDate,        
+    
+  '' As LicenseExpiryDate,  
+    
+  ''MainOrgId,        
+ ''OrganizationId,        
+ '' As parentname,        
+          
+  --BG Details        
+--  isnull(bgd.BGNo,'') BGNo,        
+    
+   '' as BGNo,  
+  
+  ''BankName,        
+  ''BankId,        
+ -- bgd.BGIssueDt,   
+    '' As BGIssueDt,    
+  '' As BGExpiryDate,      
+  ''   AS BGStatus,        
+  
+--   ISNULL(states_Ara.StateName,states.StateName) BGStatus,     
+ -- bgd.BGExpiryDt As BGExpiryDate,     
+    
+      
+          
+  --Trade License        
+  '' TLLicenseNo,        
+  -- TL.ExpirationDate TLExpiryDate,       
+    
+    
+ -- CONVERT(VARCHAR(10),  TL.ExpirationDate, 103) As TLExpiryDate,    
+    
+ -- isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  TL.ExpirationDate, 103),'1900-01-01 00:00:00.000'))  As TLExpiryDate,  
+   
+  
+''  As TLExpiryDate,  
+  
+      
+  '' TLIssuedate,        
+          
+  --Contact Details        
+ -- cts.MobileTelNumber as MobileNumber,     
+  ED.MobileNumber as MobileNumber,        
+    
+       
+  ''BusinessFaxNumber,        
+  ED.Email as email,        
+  ED.Address Address,        
+  ''OrganizationTypeId,        
+          
+  ---company details for spcl broker and spcl messenger        
+          
+  '' companyname,        
+  ''TradeLicenseNumber,        
+          
+  ''LocalDescription,        
+  '' ConmpanyType     ,   
+  '' as CommercialLicenseNo,  
+        
+      'BrokerDetails' as "TableName"   
+   --SELECT 
+   ,'ExamPassedState'  StateId,  '' ChildOrgId  ,     
+      
+ EAD.ownerorgid MainOrgId, EAD.ownerorgid 'OrgId'      
+ ,EAD.ownerorgid 'OrganizationId'      
+ --,'SubBrokerDetails' as "TableName"       
+ ,  ED.CivilID CivilId      
+ , 
+--  CASE BBD.StateId       
+--  WHEN 'BrokBGDetailActivatedState' THEN 'ACTIVE'       
+--  WHEN 'BrokBGDetailDeActivatedState' THEN 'DEACTIVE'        
+--  ELSE 'INACTIVE'       
+--END as 
+'ExamPassedState' BGStatus ,      
+             
+--   CASE O.StateId       
+--  WHEN 'OrganizationsCreatedState' THEN 'ACTIVE'       
+--    WHEN 'OrganizationsModifyState' THEN 'ACTIVE'       
+--  WHEN 'OrganizationsNotActivatedState' THEN 'DEACTIVE'        
+--  ELSE       
+--  'INACTIVE'      
+--END AS
+'ExamPassedState' AccountStatus       
+      
+,'u.AccountStatus' as testaccnt,
+ ''    TypeId,  
+  '' TradeLicenseNumber,          
+  ED.RequestForName AS BrokerName,          
+  '' BrokerFileNumber,          
+ -- ISNULL(T.NAME, BrokerType.NAME) AS BrokerType,BrokerType.Name as EseBrokerType,      
+   ISNULL(T_ara.Name,T.Name) AS BrokerType ,   T.name  as EseBrokerType    ,
+ '' as BankGuaranteeNo ,      
+  '' as BankGuaranteeExpiryDate,      
+  '' AS 'BankGuaranteeExpiryDatee' -- Abdul Karim      
+  --,*          
+  , '' As LicenseNumberExpiryDate,
+--  select
+-- a.requesteruserid,
+--    T.name as EseBrokerType,ISNULL(T_ara.Name,T.Name) as BrokerType  ,       
+-- 'SubBrokerDetails' as "TableName" ,      
+      
+--c.RequestForName  as BrokerName,      
+--a.EserviceRequestId as OrganizationId,      
+----E.EserviceRequestNumber as encryptedEServiceRequestNumber,      
+--a.EserviceRequestNumber as TradeLicenseNumber ,      
+--     c.RequestForUserType,d.ClearanceExamType  ,
+
+ E.eservicerequestid,E.stateid,eservicerequestnumber,E.datecreated,E.datemodified,
+--examcandidateinfoid,b.examsannouncementdetailsid,examresult,b.stateid,b.ownerorgid,
+exammark,EAD.passinggrade,
+CASE  WHEN exammark>=EAD.passinggrade THEN 'PASS' ELSE 'FAIL' END AS 'EXAMSTATUS', 
+----c.ArabicFirstName,c.Arabicsecondname,c.arabicthirdname,c.arabiclastname,
+----c.EnglishFirstName,c.EnglishSecondName,c.EnglishThirdName,c.EnglishLastName,
+--isnull(c.ArabicFirstName,'')+isnull(c.Arabicsecondname,' ')+isnull(c.arabicthirdname,' ')+isnull(c.arabiclastname,' ') 'ArabicName',
+--isnull(c.EnglishFirstName,'')+isnull(c.EnglishSecondName,' ')+isnull(c.EnglishThirdName,' ')+isnull(c.EnglishLastName,' ') 'EnglishName',
+ED.PassportNo,ED.PassportExpiryDate,ED.CivilID,
+ED.CivilIDExpiryDate,ED.Email,ED.MobileNumber,ED.Address
+--FROM etrade.[EServiceRequests] a INNER JOIN [dbo].[examcandidateinfo] b ON a.eservicerequestid=b.eservicerequestid
+--INNER JOIN etrade.[EServiceRequestsdetails] c on c.eservicerequestid=a.eservicerequestid
+--INNER join [dbo].[examsannouncementDetails] d on d.examsannouncementdetailsid=b.examsannouncementdetailsid
+-- inner join Types T on t.TypeId =c.RequestForUserType      
+--     left join Types_ara T_ara on T.TypeId=T_ara.TypeId 
+--WHERE a.requesteruserid=77 AND a.ServiceId=28
+
+ 
+-- select  e.RequesterUserId,  T.name as EseBrokerType,ISNULL(T_ara.Name,T.Name) as BrokerType  ,       
+-- 'SubBrokerDetails' as "TableName" ,      
+      
+--ED.RequestForName  as BrokerName,      
+--E.EserviceRequestId as OrganizationId,      
+----E.EserviceRequestNumber as encryptedEServiceRequestNumber,      
+--E.EserviceRequestNumber as TradeLicenseNumber ,      
+--      e.EserviceRequestId,E.EserviceRequestNumber,ed.RequestForUserType,EAD.ClearanceExamType      
+--,eci.ExamResult,eci.DateModified,dateadd(month, -6, getdate())      
+      
+--,* 
+from    ExamCandidateInfo  ECI 
+inner JOIN      
+             ExamsAnnouncementDetails EAD ON       
+             ECI.ExamsAnnouncementDetailsId =       
+             EAD.ExamsAnnouncementDetailsId 
+			 inner JOIN      
+             ExamsAnnouncements EA ON EAD.ExamsAnnouncementId =      
+              EA.ExamsAnnouncementId      
+     inner join etrade.EServiceRequests E on E.EserviceRequestId =ECI.EServiceRequestId      
+     inner join etrade.EServiceRequestsDetails ED on E.EserviceRequestId =ED.EserviceRequestId      
+     inner join Types T on t.TypeId =ed.RequestForUserType      
+     left join Types_ara T_ara on T.TypeId=T_ara.TypeId  AND      T.TypeId!=33224591--exclude general broker for service 28,31
+      --SELECT * FROM types WHERE typeid IN (33224591,33224592,33224593,33237149)--broker types
+     where       
+      
+  e.RequesterUserId=@MobileUserid  and      
+      eci.ExamResult=(select typeid from Types where Name='passed the exam' and StateId='EserviceExamResultsTypesCreatedState')      
+          
+    and eci.DateModified >= dateadd(month, -6, getdate())      
+          
+    and( e.EServiceRequestId not in (select isnull(OrganizationId,0) from etrade.EServiceRequestsDetails where RequestServicesId=@serviceid      
+    and StateId  in ('EServiceRequestDetailsProceedState','EServiceRequestDetailsCompletedState','EServicesRequestDetailsSubmittedState','EServiceRequestDetailsReSubmittedState')) )
+     -- and StateId  in ('EServiceRequestSubmittedState','EServiceRequestCreatedState')) 
+    AND (ECI.ExamCandidateInfoId=@ChildOrgId or (@ChildOrgId is null and @serviceid in (31,28)))
+	print ( @ChildOrgId)
+	  return;
+	  end
+	        
+			PRINT 'old select genrboker'
+		PRINT	 @OrganizationId   
+  PRINT @serviceid     
+ PRINT @eservicerequestid       
+ PRINT @lang  
+ 
+ select distinct   BK.BankCode,  
+    isnull(BrokOrg.FirstName+' '+BrokOrg.LastName,BrokOrg.Name) as BrokerEnglishName,    
+  bod.BrokerOrgId,         
+          
+  brokertype.Name BTEng,        
+ case when @lang='ar' then  ISNULL(BrokerType.LocalDescription, BrokerType.Name) else ISNULL(BrokerType.Name, BrokerType.LocalDescription) end   AS BrokerType,        
+states.StateName,states.StateId,        
+  ISNULL(states_Ara.StateName, states.StateName) AS [Status],           
+  Brokorg.OrganizationCode as BrokerCode,        
+  BrokOrg.LocalDescription AS BrokerNameAra,        
+  bod.CivilId,        
+  -- bod.IDExpiryDate As CivilIdExpiryDate,        
+    
+    
+ -- CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103) As CivilIdExpiryDate,  
+  
+  
+--isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103)) As CivilIdExpiryDate,  
+  
+  
+--isnull(CONVERT(VARCHAR(10),  '', 103),'') As CivilIdExpiryDate,  --qasem remove
+
+COALESCE(
+  CONVERT(VARCHAR(10), ERS.CivilIDExpiryDate, 103),
+  CONVERT(VARCHAR(10), bod.IDExpiryDate, 103),
+  ''
+) AS CivilIdExpiryDate, --qasem4
+
+  
+-- isnull(isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103),'1900-01-01 00:00:00.000'))  As CivilIdExpiryDate,  
+   
+  
+   
+    
+ -- '' as PassportNo,      qasem remove  
+  COALESCE(
+  CONVERT(VARCHAR(10), ERS.PassportNo, 103),
+  CONVERT(VARCHAR(10), bod.PassportNo, 103),
+  ''
+) AS PassportNo, --qasem4
+
+  -- case when isnull(isnull(ers.PassportNo,bod.PassportNo),'')='NULL' then '' else isnull(isnull(ers.PassportNo,bod.PassportNo),'') end as PassportNo,  
+  -- isnull(bod.PassportExpiryDate,'1900-01-01 00:00:00.000') As PassportExpirydate,        
+    
+ -- bod.PassportExpiryDate as PassportExpirydate,  
+--CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)  As TestPassportExpirydate,  
+    
+-- isnull(CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103),'1900-01-01 00:00:00.000')  As PassportExpirydate,  
+   
+   
+    
+ --isnull(CONVERT(VARCHAR(10),  '', 103),'') As PassportExpirydate,    --qasem remove
+  COALESCE(
+  CONVERT(VARCHAR(10), ERS.PassportExpiryDate, 103),
+  CONVERT(VARCHAR(10), bod.PassportExpiryDate, 103),
+  ''
+) AS PassportExpirydate, --qasem
+
+    
+-- isnull(CONVERT(VARCHAR(10),  ers.PassportExpiryDate, 103),CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)) As PassportExpirydate,  
+  
+   
+case when @lang='ar' then  ISNULL(BrokCountry.LocalDescription,BrokCountry.Name) else ISNULL(BrokCountry.Name,BrokCountry.LocalDescription) end  AS Nationality,        
+         
+         
+          
+  --Broker License Details              
+  BLD.LicenseNo As BrokerLicenseNo,        
+  BLD.DtOfIssue As LicenseIssueDate,        
+  BLD.BrokerFileNumber As BrokerFileNumber,        
+ -- bld.DtOfExpiry As LicenseExpiryDate,        
+    
+  CONVERT(VARCHAR(10),  bld.DtOfExpiry, 103) As LicenseExpiryDate,  
+    
+  sbm.MainOrgId,        
+ mo.OrganizationId,   
+ --qasem6-12 edit parentname
+ case when @lang='ar' then
+ isnull(Mo.LocalDescription,BrokOrg.LocalDescription)
+ else
+ isnull(mo.Name,BrokOrg.Name) end As parentname,        
+          
+  --BG Details        
+--  isnull(bgd.BGNo,'') BGNo,        
+    
+   case when isnull(bgd.BGNo,'')='NULL' then '' else isnull(bgd.BGNo,'') end as BGNo,  
+  
+  ISNULL(BK_ara.Name,BK.Remarks )BankName,        
+  bgd.BankId,        
+ -- bgd.BGIssueDt,   
+    CONVERT(VARCHAR(10),  bgd.BGIssueDt, 103) As BGIssueDt,    
+  CONVERT(VARCHAR(10),  bgd.BGExpiryDt, 103) As BGExpiryDate,      
+   case when @lang='ar' then  ISNULL(states_Ara.StateName,states.StateName) else ISNULL(states.StateName,states_Ara.StateName) end   AS BGStatus,        
+  
+--   ISNULL(states_Ara.StateName,states.StateName) BGStatus,     
+ -- bgd.BGExpiryDt As BGExpiryDate,     
+    
+      
+          
+  --Trade License        
+  TL.LicenseNumber TLLicenseNo,        
+  -- TL.ExpirationDate TLExpiryDate,       
+    
+    
+ -- CONVERT(VARCHAR(10),  TL.ExpirationDate, 103) As TLExpiryDate,    
+    
+ -- isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  TL.ExpirationDate, 103),'1900-01-01 00:00:00.000'))  As TLExpiryDate,  
+   
+
+--rama remove  
+--case when @serviceid='14' 
+--then isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),CONVERT(VARCHAR(10),  TL.ExpirationDate, 103)),'30/12/1950')
+--else isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),CONVERT(VARCHAR(10),
+--TL.ExpirationDate, 103)) end As TLExpiryDate,  
+       
+--start rama
+CASE
+    WHEN @serviceid = '14' THEN
+        ISNULL(
+            ISNULL(
+			    CONVERT(VARCHAR(10), TL.ExpirationDate, 103), --qasem5
+                CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103)--qasem5
+            ),
+            '1950-12-30 00:00:00.000'
+        )
+    ELSE
+        ISNULL(
+		    CONVERT(VARCHAR(10), TL.ExpirationDate, 103), --qasem5
+            CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103)--qasem5
+        )
+END AS TLExpiryDate,
+--end rama
+
+TL.EffectiveFrom TLIssuedate,        
+
+
+  --Contact Details        
+ -- cts.MobileTelNumber as MobileNumber,     
+  isnull(ers.MobileNumber,cts.MobileTelNumber) as MobileNumber,        
+    
+       
+  cts.BusinessFaxNumber,        
+  isnull(ers.email,cts.EMail) as email,        
+  BrokAddress.Address,        
+  CDO.OrganizationTypeId,        
+          
+  ---company details for spcl broker and spcl messenger        
+          
+  cdo.name companyname,        
+  cdo.TradeLicenseNumber,        
+          
+  cdo.LocalDescription,        
+  cdt.Name ConmpanyType     ,   
+  isnull(BrokOrg.CommercialLicenseNo ,TL.LicenseNumber) as CommercialLicenseNo,  
+        
+      'BrokerDetails' as "TableName"   
+    --  select top 20 * from Banks  
+                
+FROM Organizations BrokOrg              
+Left JOIN BrokerOrgDetails BOD     
+  
+  
+ON BOD.BrokerOrgId=BrokOrg.OrganizationId        
+--Left join BrokBGDetails BGD on  BrokOrg.OrganizationId  =BGD.BrokerOrgId    
+Outer apply (select top 1 *  from BrokBGDetails BGD where  BrokOrg.OrganizationId  =BGD.BrokerOrgId order by datecreated DESc) BGD          
+LEFT JOIN SubOrg SBM ON BOD.BrokerOrgId=SBM.ChildOrgId        
+left join Organizations SO on SBM.ChildOrgId=SO.OrganizationId        
+left join Organizations MO on sbm.MainOrgId=mo.OrganizationId        
+Left join Banks BK on BGD.BankId=BK.OrganizationId        
+Left join Organizations_ara BK_ara on BK.OrganizationId =BK_ara.OrganizationId        
+    
+Left Join TradeLicenses TL on  BrokOrg.OrganizationId =TL.OrganizationId           
+Left JOIN [Types] [BrokerType] ON BOD.BrokerTypeId=[BrokerType].TypeId               
+LEFT JOIN BrokLicenseDetails BLD ON BrokOrg.OrganizationId=BLD.BrokerOrgId               
+LEFT JOIN BrokContractDetails BCD ON BOD.BrokerOrgId=BCD.BrokerOrgId              
+LEFT JOIN Addresses BrokAddress ON BrokOrg.OrganizationId=BrokAddress.ParentId        
+left join Contacts cts on BrokAddress.ParentId=cts.ParentId               
+LEFT JOIN Locations BrokCountry ON BrokAddress.Country=BrokCountry.LocationId               
+left join users on users.OrganizationId=BOD.BrokerOrgId             
+left join DataProfileClassWorkflowStates states on BrokOrg.StateId =states.StateId   --and  states.StateId in ('OrganizationsCreatedState','OrganizationsModifyState','OrganizationsActivatedState')        
+       
+LEFT JOIN DataProfileClassWorkFlowStates_Ara states_Ara ON states.StateId=states_Ara.StateId        
+left join BrokerImporter BKI on BOD.BrokerOrgId=BKI.BrokerOrgId        
+-- and  BKI.StateId NOT in ('BrokerImporterDeletedState')---- condittion on         
+left join Organizations CDO on BKI.CompanyId=CDO.OrganizationId        
+left join Types CDT on CDO.OrganizationTypeId=CDT.TypeId     
+left join etrade.EServiceRequestsDetails ERS on ers.OrganizationId=@OrganizationId      
+ --    left join etrade.EServiceRequests E on E.EserviceRequestId=ers.EserviceRequestId    and E.StateId not in ('EServiceRequestFinalRejectedState')      
+WHERE 1 =1          
+        
+                                          -- 10/12/2019  
+and bod.BrokerOrgId=@OrganizationId   AND ERS.StateId NOT IN ('EServicesRequestDetailsDeletedState')    
+  --    and e.ServiceId=@serviceid  
+   and (( ISNULL(@serviceid,'')<>'' and ERS.RequestServicesId = @serviceid ) or ( ISNULL(@serviceid,'')='' and 1=1 ))    
+     
+   
+          and (( ISNULL(@eservicerequestid,'')<>'' and ERS.EserviceRequestId = @eservicerequestid ) or ( ISNULL(@eservicerequestid,'')='' and 1=1 ))   
+            
+            
+             
+  
+            
+SET NOCOUNT OFF;                   
+                   
+                 
+END         
+        
+  
