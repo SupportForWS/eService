@@ -1,34 +1,10 @@
-ALTER TABLE etrade.IndividualAuthorizationRequests
-ADD  TemporaryRequestNumber VARCHAR(50) NULL;
-Insert into SGCounter Values('TempIndividualAuthorization','IndividualAuthorizationRequests','TemporaryRequestNumber',null,(select SeedValue from SGCounter where countername ='IndividualAuthorization' ),null)
-
-
-
-
-,
-BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic
-left join  etrade.CustomsBusinessActivities_BPN BA on BA.Id =oa.ActivityId
-
-BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic
-
-left join etrade.CustomsBusinessActivities_BPN BA on BA.Id =ob.CustomsBusinessActivityId
-
-
-USE [Microclearlight_BPMigration]
-GO
-
-DECLARE	@return_value int
-
-EXEC	@return_value = [etrade].[usp_BRS_MApp_GetNotificationsList]
-		@mUserId = 5699,
-		@lang = N'ar'
-
-SELECT	'Return Value' = @return_value
-
-GO
-
-
-
-
+   case 
+									   when @serviceid in(31,28) and @lang ='eng'
+									   then
+									   ers.RequesterEnglishName
+									   else 
+									   ers.RequesterArabicName
+									   end
+									   AS parentname            
+                                       --RequestForName as BrokerEnglishName,            
+                                       ers.CivilID, 
