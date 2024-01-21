@@ -1,467 +1,1622 @@
 USE [MicroclearLight_July23]
 GO
-/****** Object:  StoredProcedure [etrade].[usp_GetGenBrokerDetailsforBRSEservice]    Script Date: 1/21/2024 7:11:40 PM ******/
+/****** Object:  StoredProcedure [etrade].[Sp_getBrokerDetailsForEservices]    Script Date: 1/21/2024 1:14:54 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
---sp_helptext 'etrade.usp_GetGenBrokerDetailsforBRSEservice'
 
 
 
- ALTER             PROCEDURE [etrade].[usp_GetGenBrokerDetailsforBRSEservice]                  
-(              
-  @OrganizationId Varchar(50)=''  
-  ,@serviceid int  =''    
- , @eservicerequestid int ='' ,     
-  @lang Varchar(5)='' 
-   ,
+----exec etrade.Sp_getBrokerDetailsForEservices @Userid='1536485',@orgid=29590,@requestNumber=NULL,
+----@ReferenceProfile='BRSPrintingChangeJobTitleAndTransferResidencyDOCS',@lang='eng',@Serviceid=28,@mobileUserId=77,
+----@RequestedForMobileUserid=0,@ExamReq=0,@ExamPassedBrokerOnly='yes',@ChildOrgId=1540
 
-  @ExamPassedBrokerOnly varchar(10)='no',
-  @MobileUserid bigint =0,
-  @ChildOrgId int =0
-           
-                
-)                  
+--exec etrade.Sp_getBrokerDetailsForEservices @Userid='1536485',@orgid=1536485,@requestNumber='PRJT/46/21',
+--@ReferenceProfile='BRSPrintingChangeJobTitleAndTransferResidencyDOCS',@lang='eng',
+--@Serviceid=28,@mobileUserId=77,@RequestedForMobileUserid=0,@ExamReq=0,@ExamPassedBrokerOnly=NULL,@ChildOrgId=NULL
+
+--exec etrade.Sp_getBrokerDetailsForEservices @Userid='29966',@orgid=29590,@requestNumber=NULL,@ReferenceProfile='BRSPrintingChangeJobTitleAndTransferResidencyDOCS',
+--@lang='eng',@Serviceid=28,@mobileUserId=78,@RequestedForMobileUserid=0,@ExamReq=0,@ExamPassedBrokerOnly='yes'
+--sp_helptext 'etrade.Sp_getBrokerDetailsForEservices'
+--SELECT TOP 5 *
+--FROM etrade.EServiceRequests er
+--ORDER BY 1 DESC;
+--SELECT * FROM dbo.ExamCandidateInfo eci
+--SELECT * FROM dbo.ExamsAnnouncementDetails ead 
+--SELECT TOP 5 *
+--FROM etrade.EServiceRequestsDetails erd
+--ORDER BY 1 DESC;
+------exec etrade.Sp_getBrokerDetailsForEservices @Userid='1536485',@orgid=1536485,@requestNumber='PRJT/11/21',@ReferenceProfile='BRSPrintingChangeJobTitleAndTransferResidencyDOCS',@lang='eng',@Serviceid=28,@mobileUserId=77,@RequestedForMobileUserid=0,@ExamReq=0,@ExamPassedBrokerOnly=NULL,@ChildOrgId=NULL
+
+--EXEC etrade.Sp_getBrokerDetailsForEservices 
+--     @Userid = '1536485', 
+--     @orgid = 29590, 
+--     @requestNumber = NULL, 
+--     @ReferenceProfile = 'BRSPrintingChangeJobTitleAndTransferResidencyDOCS', 
+--     @lang = 'eng', 
+--     @Serviceid = 28, 
+--     @mobileUserId = 77, 
+--     @RequestedForMobileUserid = 0, 
+--     @ExamReq = 0, 
+--     @ExamPassedBrokerOnly = 'yes', 
+--     @ChildOrgId = 1537;
+ALTER   PROCEDURE [etrade].[Sp_getBrokerDetailsForEservices]
+(@Userid                   NVARCHAR(MAX) = '', 
+ @orgid                    NVARCHAR(MAX) = NULL, 
+ @stgorgid                 INT           = 0, 
+ @requestNumber            NVARCHAR(MAX) = '', 
+ @ReferenceProfile         VARCHAR(200)  = '', 
+ @lang                     VARCHAR(10)   = '', 
+ @serviceid                INT           = 0, 
+ @IsDRBroker               BIT           = 0, --rama
+ @PersonalId            INT           =0,--rama
+ @ExamReq                  BIT           = 0, 
+ @IsGeneralBroker BIT = 0,  --omar
+ @MobileUserid             BIGINT
+
+
+ , -- This column is logged in mobile userid             
+ @RequestedForMobileUserid BIGINT        = NULL
+ , -- This column will be valid MC Org id for the requested for user, in case of new user exam request , this will be null             
+ @RequestForUserType       BIGINT        = NULL
+ , -- This will be used in Case of Exam Request ONLY    
+ @ExamPassedBrokerOnly     VARCHAR(10)   = 'no', 
+ @ChildOrgId               INT           = 0--ExamCandidateInfoId
+)
+AS
+    BEGIN
+	IF (@ExamPassedBrokerOnly IS null) SET @ExamPassedBrokerOnly='no'
+        SET NOCOUNT ON;
+        DECLARE @RequestCreatedFor NVARCHAR(MAX);
+        DECLARE @eservicerequestid INT;
+        DECLARE @prefix VARCHAR(20);
+        DECLARE @RequestdataSourceName VARCHAR(100);
+        DECLARE @RequestDetailsdataSourceName VARCHAR(100);
+        DECLARE @isMultiRequestAllowd CHAR(1);
+        DECLARE @RequestState VARCHAR(50)= 'EServiceRequestCreatedState';
+        DECLARE @RequestDetailState VARCHAR(50)= 'EServicesRequestDetailsCreatedState';
+        IF(@serviceid = 14) -- Broker Transfer Service      
+            BEGIN
+                SET @RequestState = 'EservTranReqCreatedState';
+                SET @RequestDetailState = 'EservTranReqDetCreatedState';
+        END;
+
+        -- exec etrade.Sp_getBrokerDetailsForEservices @Userid='ABDULLAH.BOARKI',@orgid=298301,@requestNumber=NULL,@ReferenceProfile='BRSERenewalDocs',@lang='eng'            
+        IF(@serviceid != 0)
+            BEGIN
+                SET @prefix =
+                (
+                    SELECT prefix
+                    FROM etrade.Eservices
+                    WHERE ServiceID = @serviceid
+                );
+                SET @RequestdataSourceName =
+                (
+                    SELECT RequestDataSourceName
+                    FROM etrade.Eservices
+                    WHERE ServiceID = @serviceid
+                );
+        END;
+        SET @RequestDetailsdataSourceName = 'EServiceRequestsdetails';
+
+        -- select * from etrade.Eservices             
+
+        IF((@ExamReq = 1
+           AND (@orgid = ''
+                OR @orgid IS NULL)) 
+           AND (@requestNumber = ''
+                OR @requestNumber IS NULL))
+            BEGIN
+                PRINT 'first request creation block';
+                DECLARE @CounterValueStart0 INT= 0, @CounterValueEnd0 INT= 0;
+                EXEC dbo.usp_MCPKCounters 
+                     @DataSourceName = 'EServiceExamRequests', -- varchar(50)              
+                     -- @SeedValue = @dcCount              
+                     --,-- bigint              
+                     @CounterValueStart = @CounterValueStart0 OUTPUT, -- bigint                 
+                     @CounterValueEnd = @CounterValueEnd0 OUTPUT; -- bigint              
+
+                DECLARE @CounterValueStartPkidID INT= 0, @CounterValuePkEnd INT= 0;
+                EXEC dbo.usp_MCPKCounters 
+                     @DataSourceName = 'EServiceRequests_pk', -- varchar(50)              
+                     -- @SeedValue = @dcCount         
+                     --,-- bigint              
+                     @CounterValueStart = @CounterValueStartPkidID OUTPUT, -- bigint              
+                     @CounterValueEnd = @CounterValuePkEnd OUTPUT; -- bigint              
+
+                SET @requestNumber = (@prefix + '/' + CONVERT(VARCHAR(100), @CounterValueStart0) + '/' + CONVERT(VARCHAR(MAX), RIGHT(YEAR(GETDATE()), 2)));
+                INSERT INTO [etrade].[EServiceRequests]
+                (EServiceRequestid, 
+                 eservicerequestnumber, 
+                 serviceid, 
+                 DateCreated, 
+                 DateModified, 
+                 stateid, 
+                 createdby, 
+                 RequesterUserId
+                )
+                       SELECT TOP 1 @CounterValueStartPkidID, 
+                                    @requestNumber, 
+                                    @serviceid, 
+                                    GETDATE() AS [DateCreated], 
+                                    '', 
+                                    @RequestState
+                                    ,--'EServiceRequestCreatedState'             
+                                    @Userid, 
+                                    @MobileUserid;            
+                --FROM [etrade].[EServiceRequests] E            
+                --SELECT *            
+                --FROM [etrade].[EServiceRequests]            
+                --WHERE EServiceRequestid = @CounterValueStart0            
+                --PRINT ('NEW');            
+                --PRINT @@ROWCOUNT    
+                IF EXISTS
+                (
+                    SELECT 1
+                    FROM [etrade].[EServiceRequests]
+                    WHERE EServiceRequestid = @CounterValueStartPkidID
+                ) --@@ROWCOUNT = '1')            
+                    BEGIN     
+                        --PRINT ('NEW');            
+                        DECLARE @ForeignEserviceid0 INT;
+                        SET @ForeignEserviceid0 = @CounterValueStartPkidID;
+                        SET @CounterValueStart0 = 0;
+                        SET @CounterValueEnd0 = 0;
+                        EXEC dbo.usp_MCPKCounters 
+                             @DataSourceName = 'EServiceRequestsdetails', 
+                             @CounterValueStart = @CounterValueStart0 OUTPUT, 
+                             @CounterValueEnd = @CounterValueEnd0 OUTPUT;
+					
+                        INSERT INTO [etrade].[EServiceRequestsdetails]
+                        (EServiceRequestdetailsid, 
+                         eservicerequestid, 
+                         organizationid, 
+                         stateid, 
+                         createdby, 
+                         modifiedby, 
+                         RequestForUserId, 
+                         RequesterUserId, 
+                         requestforname, 
+                         RequestForEmail
+                         , -- No mcuserid and email id for messengers, so RequesterMobileruserid email will be considered             
+                         rEQUESTsERVICESID, 
+                         RequestForUserType, 
+                         CivilID, 
+                         MobileNumber, 
+                         Email, 
+                         Gender
+                        )
+                        VALUES
+                        (@CounterValueStart0, 
+                         @ForeignEserviceid0, 
+                         @orgid
+                         ,--@ForeignEserviceid0             
+                         @RequestDetailState
+                         ,--'EServicesRequestDetailsCreatedState'--'EServiceDetailsRequestCreatedState'             
+                         @Userid, 
+                         '', 
+                         @RequestedForMobileUserid
+                         , --@RequestCreatedFor - supply org id , if not null-- mobile userid only if available            
+                         --,(SELECT  FirstName +' '+LastName FROM ETRADE.MobileUser WHERE UserId=@RequestedForMobileUserid)             
+                         @MobileUserid
+                         ,            
+                         --,null             
+                         ISNULL(
+                        (
+                            SELECT Name
+                            FROM Organizations
+                            WHERE OrganizationId = @RequestedForMobileUserid
+                        ),
+                        (
+                            SELECT FirstName + ' ' + LastName
+                            FROM ETRADE.MobileUser
+                            WHERE UserId = @MobileUserid
+                        ))
+                         ,            
+                         --,null             
+                         ISNULL(
+                        (
+                            SELECT a.EMAILID
+                            FROM users a
+                                 INNER JOIN Organizations b ON a.OrganizationId = b.OrganizationId
+                            WHERE a.OrganizationId = @RequestedForMobileUserid
+                        ),
+                        (
+                            SELECT EmailId
+                            FROM ETRADE.MobileUser
+                            WHERE UserId = @MobileUserid
+                        )), 
+                         @serviceid, 
+                         @RequestForUserType, 
+						 -- start omar
+                        (
+							Case @IsGeneralBroker
+								when 1 
+								then (SELECT CivilID
+									    FROM ETRADE.MOBILEUSER
+										WHERE USERID = @USERID)
+								else ''
+							end
+                        ), 
+                        (
+                            Case @IsGeneralBroker
+								when 1 
+								then (SELECT MobileNumber
+									FROM ETRADE.MOBILEUSER
+									WHERE USERID = @USERID)
+								else ''
+							end
+                        ), 
+                        (
+                             Case @IsGeneralBroker
+								when 1 
+								then (SELECT EmailID
+										FROM ETRADE.MOBILEUSER
+										WHERE USERID = @USERID)
+								else ''
+							end
+                        ), 
+                        (
+                            Case @IsGeneralBroker
+								when 1 
+								then (SELECT Gender
+										FROM ETRADE.MOBILEUSER
+										WHERE USERID = @USERID)
+								else null
+							end
+                        )
+						-- end omar
+                        );
+                        SET @eservicerequestid = @ForeignEserviceid0;
+		
+                        /* audit entries for eserviceRequest and eserviceRequestDetails - start */
+
+                        INSERT INTO ETRADE.[$EServiceRequests]
+                        ([$AuditTrailId], 
+                         [$UserId], 
+                         [$Operation], 
+                         [$DateTime], 
+                         [$DataProfileClassId], 
+                         [$IPId], 
+                         [$SessionId], 
+                         [EServiceRequestId], 
+                         [EServiceRequestNumber], 
+                         [RequestSubmissionDateTime], 
+                         [RequestCompletionDateTime], 
+                         [StateId], 
+                         [DateCreated], 
+                         [CreatedBy], 
+                         [ModifiedBy], 
+                         [DateModified], 
+                         [OwnerOrgId], 
+                         [OwnerLocId], 
+                         [ServiceId], 
+                         [RequesterUserId], 
+                         [RequesterUserType], 
+                         [DeliveredDate], 
+                         [DeliveredBy], 
+                         [ApprovedDate], 
+                         [ApprovedBy], 
+                         [KNetReceiptNo]
+                        )
+                               SELECT NEWID(), 
+                                      @Userid, 
+                                      1, 
+                                      GETDATE(), 
+                                      'EServiceRequests', 
+                                      '127.0.0.1', 
+                                      'system', 
+                                      [EServiceRequestId], 
+                                      [EServiceRequestNumber], 
+                                      [RequestSubmissionDateTime], 
+                                      [RequestCompletionDateTime], 
+                                      [StateId], 
+                                      GETDATE(), 
+                                      @UserId, 
+                                      @UserId, 
+                                      GETDATE(), 
+                                      [OwnerOrgId], 
+                                      [OwnerLocId], 
+                                      [ServiceId], 
+                                      [RequesterUserId], 
+                                      [RequesterUserType], 
+                                      [DeliveredDate], 
+                                      [DeliveredBy], 
+                                      [ApprovedDate], 
+                                      [ApprovedBy], 
+                                      [KNetReceiptNo]
+                               FROM ETRADE.EServiceRequests
+                               WHERE EServiceRequestId = @EServiceRequestId;
+                        INSERT INTO ETRADE.[$EServiceRequestsDetails]
+                        ([$AuditTrailId], 
+                         [$UserId], 
+                         [$Operation], 
+                         [$DateTime], 
+                         [$DataProfileClassId], 
+                         [$IPId], 
+                         [$SessionId], 
+                         [EserviceRequestDetailsId], 
+                         [EserviceRequestId], 
+                         [RequestForUserType], 
+                         [RequestServicesId], 
+                         [OrganizationId], 
+                         [RequesterLicenseNumber], 
+                         [RequesterArabicName], 
+                         [RequesterEnglishName], 
+                         [ArabicFirstName], 
+                         [ArabicSecondName], 
+                         [ArabicThirdName], 
+                         [ArabicLastName], 
+                         [EnglishFirstName], 
+                         [EnglishSecondName], 
+                         [EnglishThirdName], 
+                         [EnglishLastName], 
+                         [Nationality], 
+                         [CivilID], 
+                         [CivilIDExpiryDate], 
+                         [MobileNumber], 
+                         [PassportNo], 
+                         [PassportExpiryDate], 
+                         [Address], 
+                         [Email], 
+                         [LicenseNumber], 
+                         [LicenseNumberExpiryDate], 
+                         [Remarks], 
+                         [RejectionRemarks], 
+                         [RequestForVisit], 
+                         [RequestForVisitRemarks], 
+                         [ExamAddmissionId], 
+                         [ExamDetailsId], 
+                         [status], 
+                         [StateId], 
+                         [DateCreated], 
+                         [CreatedBy], 
+                         [ModifiedBy], 
+                         [DateModified], 
+                         [OwnerOrgId], 
+                         [OwnerLocId], 
+                         [RequesterUserId], 
+                         [RequestForName], 
+                         [RequestForEmail], 
+                         [Gender], 
+                         [RequestForUserId], 
+                         [BrokFileNo], 
+                         [AssociatedOrgIds]
+                        )
+                               SELECT NEWID(), 
+                                      @UserId, 
+                                      1, 
+                                      GETDATE(), 
+                                      'EServiceRequestsDetails', 
+                                      '127.0.0.1', 
+                                      'system', 
+                                      [EserviceRequestDetailsId], 
+                                      [EserviceRequestId], 
+                                      [RequestForUserType], 
+                                      [RequestServicesId], 
+                                      [OrganizationId], 
+                                      [RequesterLicenseNumber], 
+                                      [RequesterArabicName], 
+                                      [RequesterEnglishName], 
+                                      [ArabicFirstName], 
+                                      [ArabicSecondName], 
+                                      [ArabicThirdName], 
+                                      [ArabicLastName], 
+                                      [EnglishFirstName], 
+                                      [EnglishSecondName], 
+                                      [EnglishThirdName], 
+                                      [EnglishLastName], 
+                                      [Nationality], 
+                                      [CivilID], 
+                                      [CivilIDExpiryDate], 
+                                      [MobileNumber], 
+                                      [PassportNo], 
+                                      [PassportExpiryDate], 
+                                      [Address], 
+                                      [Email], 
+                                      [LicenseNumber], 
+                                      [LicenseNumberExpiryDate], 
+                                      [Remarks], 
+                                      [RejectionRemarks], 
+                                      [RequestForVisit], 
+                                      [RequestForVisitRemarks], 
+                                      [ExamAddmissionId], 
+                                      [ExamDetailsId], 
+                                      [status], 
+                                      [StateId], 
+                                      [DateCreated], 
+                                      [CreatedBy], 
+                                      [ModifiedBy], 
+                                      [DateModified], 
+                                      [OwnerOrgId], 
+                                      [OwnerLocId], 
+                                      [RequesterUserId], 
+                                      [RequestForName], 
+                                      [RequestForEmail], 
+                                      [Gender], 
+                                      [RequestForUserId], 
+                                      [BrokFileNo], 
+                                      [AssociatedOrgIds]
+                               FROM etrade.EServiceRequestsDetails
+                               WHERE EServiceRequestId = @EServiceRequestId;
+
+                        /* audit entries for eserviceRequest and eserviceRequestDetails - start */
+
+                END;
+        END;
+        IF(@requestNumber IS NOT NULL
+           OR @requestNumber <> '')
+
+        -- IF (@requestNumber LIKE '%RSR%')            
+            BEGIN
+                PRINT(' LR here');
+                PRINT(@requestNumber);
+                SET @eservicerequestid =
+                (
+                    SELECT eservicerequestid
+                    FROM [etrade].[EServiceRequests]
+                    WHERE eservicerequestnumber = @requestNumber
+                );
+                SET @orgid =
+                (
+                    SELECT OrganizationId
+                    FROM [etrade].[EServiceRequestsdetails]
+                    WHERE eservicerequestid = @eservicerequestid
+                );
+				PRINT @eservicerequestid
+				PRINT @orgid
+                PRINT(' LR End');
+
+				--Handling created requests
+				if(@serviceid =28 OR @serviceid=31)
+				BEGIN
+				PRINT 'handled createdrequest'
+				SELECT @ExamPassedBrokerOnly=(CASE WHEN licensenumber IS NULL THEN 'yes' ELSE 'no' end ) from etrade.eservicerequestsdetails  where eservicerequestid=@eservicerequestid
+				SELECT @ChildOrgId=( requestforuserid ) from etrade.eservicerequestsdetails  where eservicerequestid=@eservicerequestid
+				PRINT @ExamPassedBrokerOnly
+				PRINT @ChildOrgId
+				end
+        END;
+        DECLARE @BrokerTypeId INT;
+        DECLARE @civilIdvalue BIGINT= 0;
+        DECLARE @licenseNovalue BIGINT= 0;
+
+        -- addition for broker isueance service orgid hold the eservicerequestid n this case            
+		
+        IF(@prefix LIKE '%LI%' OR (@ExamPassedBrokerOnly='yes' ) )
+            BEGIN
+                SET @BrokerTypeId =
+                (
+                    SELECT RequestForUserType
+                    FROM etrade.EServiceRequestsDetails
+                    WHERE EserviceRequestId = @orgid
+                );
+
+                -- select RequestForUserType,RequestForName,* from etrade.EServiceRequestsDetails where EserviceRequestId=523            
+
+                SET @RequestCreatedFor =
+                (
+                    SELECT RequestForName
+                    FROM etrade.EServiceRequestsDetails
+                    WHERE EserviceRequestId = @orgid
+                );
+                SET @civilIdvalue =
+                (
+                    SELECT ISNULL(CivilId, '0')
+                    FROM etrade.EServiceRequestsDetails
+                    WHERE EserviceRequestId = @orgid
+                );
+                SET @licenseNovalue =
+                (
+                    SELECT ISNULL(LicenseNumber, '0')
+                    FROM etrade.EServiceRequestsDetails
+                    WHERE EserviceRequestId = @orgid
+                );
+        END;
+            ELSE
+            BEGIN
+                SET @civilIdvalue =
+                (
+                    SELECT ISNULL(CivilId, '0')
+                    FROM BrokerOrgDetails
+                    WHERE BrokerOrgId = @orgid
+                );
+                SET @licenseNovalue =
+                (
+                    SELECT ISNULL(LicenseNo, '0')
+                    FROM BrokLicenseDetails
+                    WHERE BrokerOrgId = @orgid
+                );
+                SET @BrokerTypeId =
+                (
+                    SELECT BrokerTypeId
+                    FROM BrokerOrgDetails
+                    WHERE BrokerOrgId = @orgid
+                );
+                SET @RequestCreatedFor =
+                (
+                    SELECT BrokOrg.Name
+                    FROM Organizations BrokOrg
+                    WHERE BrokOrg.OrganizationId = @orgid
+                );
+        END;
+
+        --  exec usp_GetGenBrokerDetailsforBRSEservice '44353'              
+        DECLARE @Org_stg TABLE([orgid] INT NULL);
+        INSERT INTO @Org_stg(orgid)
+               SELECT @orgid;
+
+        -- select * from @Userid_stg;              
+        -- select * from users              
+        DECLARE @CounterValueStart INT= 0, @CounterValueEnd INT= 0;
+
+        -- select datepart(YEAR,GETDATE()) from table              
+        -- select * from SGCounter where CounterName='EServiceRequests'              
+        -- update SGCounter set CounterName='EServiceRequests',SeedValue='378' where CounterName='EServiceRequest'              
+        PRINT(@orgid);
+        PRINT 'before req';
+        IF(((@orgid IS NOT NULL
+           AND @orgid != '0'
+           AND @ExamReq != 1) OR @ExamPassedBrokerOnly='yes') )-- @orgid != @eservicerequestid)            
+            BEGIN
+                PRINT 'create req';
+				PRINT @ExamPassedBrokerOnly
+				--SELECT *--TOP 1 1
+    --                FROM [etrade].[EServiceRequestsdetails] AS t2
+    --                     INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+    --                WHERE t2.RequestForUserId = @ChildOrgId
+    --                      AND e.serviceid = @serviceid
+    --                      AND t2.RequesterUserId = @MobileUserid
+    --                      AND t2.StateId NOT IN('EServiceRequestDetailsCompletedState','EServicesRequestDetailsApprovedState')              
+    --                     -- added by azhar for finalrejected             
+    --                     AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+    --                AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019  
+
+                /* added below code by azhar for security concern regarding user rasing request for other organizations*/
+
+                -- changes are done in Sp_SubBrokerDetailsForEservices also   
+/*  
   
-AS                  
-BEGIN                  
-  PRINT 'gen broker sp ='+@ExamPassedBrokerOnly
-              
-SET NOCOUNT ON;               
-      
-	  if(@ExamPassedBrokerOnly='yes')
-
-	  BEGIN
-	  PRINT 'exam passed broker block'
-	   select distinct   ' 'BankCode,  
-    isnull(ED.EnglishFirstName,'')+' '+isnull(ED.EnglishSecondName,'')+' '+isnull(ED.EnglishThirdName,'')+' '+isnull(ED.EnglishLastName,'') as BrokerEnglishName,    
-  '' BrokerOrgId,         
-          
-  '' BTEng,        
- --ISNULL(T_ara.Name,T.Name)    AS BrokerType,     
-  case when @lang='ar' then  ISNULL(T.LocalDescription, T.Name) else ISNULL(T.Name, T.LocalDescription) end   AS BrokerType,       
-'' StateName,''StateId,        
-  '' AS [Status],           
-  '' as BrokerCode,        
-  isnull(ED.ArabicFirstName,'')+' '+isnull(ED.Arabicsecondname,'')+' '+isnull(ED.arabicthirdname,'')+' '+isnull(ED.arabiclastname,'') AS BrokerNameAra,        
-  ED.CivilId CivilId,        
-  -- bod.IDExpiryDate As CivilIdExpiryDate,        
+declare @legalentity int   
+  
+declare @Userorgid int   
+  
+  
+set @legalentity=(select legalentity from etrade.MobileUser where UserId=@MobileUserid)  
+  
+set @Userorgid=(select OrgID from etrade.MobileUser where UserId=@MobileUserid)  
+  
+  
+  
+If(@legalentity='1' and @Userorgid is not null and @serviceid not in (7,14,17))  
+begin  
+  
+declare @TempOrgid as table   
+(  
+   StateId varchar(1000) ,  
+    childorgid varchar(200),  
+   MainOrgId varchar(200)  
+   ,OrgId varchar(200) ,OrganizationId varchar(200) ,  
+   TableName varchar(200),CivilId nvarchar(500),BGStatus varchar(200),AccountStatus varchar(200) ,testaccnt varchar(200)  
+   ,TypeId int,TradeLicenseNumber varchar(200),  
+   BrokerName nvarchar(2000)  
+   ,BrokerFileNumber int ,BrokerType nvarchar(500),EseBrokerType nvarchar(500),  
+   BankGuaranteeNo varchar(2000),BankGuaranteeExpiryDate varchar(2000),  
+   BankGuaranteeExpiryDatee varchar(2000),  
+   LicenseNumberExpirydate varchar(2000)  
+  
+)  
+  
+INSERT INTO @TempOrgid  
+  
+exec etrade.Sp_SubBrokerDetailsForEservices @Userid=@Userid,@OrganizationIDS=@Userorgid,@serviceid=@serviceid  
+  
+--select organizationid from @TempOrgid  
+  
+if not exists (  
+select 1 from @TempOrgid where OrganizationId  
+ in (@orgid))  
+begin  
+  
+return;  
+end  
+end  
+  
+if(@legalentity='2'  and @serviceid not in (7,14,17))  
+begin  
+  
+declare @TempOrgid1 as table   
+(  
     
-    
- -- CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103) As CivilIdExpiryDate,  
-  
-  
---isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103)) As CivilIdExpiryDate,  
-  
-  
-isnull(CONVERT(VARCHAR(10),  ED.CivilIDExpiryDate, 103),'') As CivilIdExpiryDate,    --qasem
-  
--- isnull(isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103),'1900-01-01 00:00:00.000'))  As CivilIdExpiryDate,  
+    Brokerorgid varchar(200)  
    
   
-   
-    
-  ED.PassportNo as PassportNo,         --qasem
+)  
   
-  -- case when isnull(isnull(ers.PassportNo,bod.PassportNo),'')='NULL' then '' else isnull(isnull(ers.PassportNo,bod.PassportNo),'') end as PassportNo,  
-  -- isnull(bod.PassportExpiryDate,'1900-01-01 00:00:00.000') As PassportExpirydate,        
-    
- -- bod.PassportExpiryDate as PassportExpirydate,  
---CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)  As TestPassportExpirydate,  
-    
--- isnull(CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103),'1900-01-01 00:00:00.000')  As PassportExpirydate,  
-   
-   
-    
- isnull(CONVERT(VARCHAR(10),  ED.PassportExpiryDate, 103),'') As PassportExpirydate,    --qasem
-    
--- isnull(CONVERT(VARCHAR(10),  ers.PassportExpiryDate, 103),CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)) As PassportExpirydate,  
+--select * from etrade.Eservices  
   
-   
-ED.Nationality AS Nationality,        
-         
-         
-          
-  --Broker License Details              
-  '' As BrokerLicenseNo,        
-  '' As LicenseIssueDate,        
-  '' As BrokerFileNumber,        
- -- bld.DtOfExpiry As LicenseExpiryDate,        
-    
-  '' As LicenseExpiryDate,  
-    
-  ''MainOrgId,        
- ''OrganizationId,        
- '' As parentname,        
-          
-  --BG Details        
---  isnull(bgd.BGNo,'') BGNo,        
-    
-   '' as BGNo,  
+INSERT INTO @TempOrgid1  
   
-  ''BankName,        
-  ''BankId,        
- -- bgd.BGIssueDt,   
-    '' As BGIssueDt,    
-  '' As BGExpiryDate,      
-  ''   AS BGStatus,        
   
---   ISNULL(states_Ara.StateName,states.StateName) BGStatus,     
- -- bgd.BGExpiryDt As BGExpiryDate,     
-    
-      
-          
-  --Trade License        
-  '' TLLicenseNo,        
-  -- TL.ExpirationDate TLExpiryDate,       
-    
-    
- -- CONVERT(VARCHAR(10),  TL.ExpirationDate, 103) As TLExpiryDate,    
-    
- -- isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  TL.ExpirationDate, 103),'1900-01-01 00:00:00.000'))  As TLExpiryDate,  
-   
+   exec etrade.Usp_MApp_GetAssociatedOrganizationsUsingOrgClearanceFileNumber @MobileUserid;     
   
-''  As TLExpiryDate,  
+--exec etrade.Sp_SubBrokerDetailsForEservices @Userid=@Userid,@OrganizationIDS=@Userorgid,@serviceid=@serviceid  
   
-      
-  '' TLIssuedate,        
-          
-  --Contact Details        
- -- cts.MobileTelNumber as MobileNumber,     
-  ED.MobileNumber as MobileNumber,        
-    
-       
-  ''BusinessFaxNumber,        
-  ED.Email as email,        
-  ED.Address Address,        
-  ''OrganizationTypeId,        
-          
-  ---company details for spcl broker and spcl messenger        
-          
-  '' companyname,        
-  ''TradeLicenseNumber,        
-          
-  ''LocalDescription,        
-  '' ConmpanyType     ,   
-  '' as CommercialLicenseNo,  
-        
-      'BrokerDetails' as "TableName"   
-   --SELECT 
-   ,'ExamPassedState'  StateId,  '' ChildOrgId  ,     
-      
- EAD.ownerorgid MainOrgId, EAD.ownerorgid 'OrgId'      
- ,EAD.ownerorgid 'OrganizationId'      
- --,'SubBrokerDetails' as "TableName"       
- ,  ED.CivilID CivilId      
- , 
---  CASE BBD.StateId       
---  WHEN 'BrokBGDetailActivatedState' THEN 'ACTIVE'       
---  WHEN 'BrokBGDetailDeActivatedState' THEN 'DEACTIVE'        
---  ELSE 'INACTIVE'       
---END as 
-'ExamPassedState' BGStatus ,      
-             
---   CASE O.StateId       
---  WHEN 'OrganizationsCreatedState' THEN 'ACTIVE'       
---    WHEN 'OrganizationsModifyState' THEN 'ACTIVE'       
---  WHEN 'OrganizationsNotActivatedState' THEN 'DEACTIVE'        
---  ELSE       
---  'INACTIVE'      
---END AS
-'ExamPassedState' AccountStatus       
-      
-,'u.AccountStatus' as testaccnt,
- ''    TypeId,  
-  '' TradeLicenseNumber,          
-  ED.RequestForName AS BrokerName,          
-  '' BrokerFileNumber,          
- -- ISNULL(T.NAME, BrokerType.NAME) AS BrokerType,BrokerType.Name as EseBrokerType,      
-   ISNULL(T_ara.Name,T.Name) AS BrokerType ,   T.name  as EseBrokerType    ,
- '' as BankGuaranteeNo ,      
-  '' as BankGuaranteeExpiryDate,      
-  '' AS 'BankGuaranteeExpiryDatee' -- Abdul Karim      
-  --,*          
-  , '' As LicenseNumberExpiryDate,
---  select
--- a.requesteruserid,
---    T.name as EseBrokerType,ISNULL(T_ara.Name,T.Name) as BrokerType  ,       
--- 'SubBrokerDetails' as "TableName" ,      
-      
---c.RequestForName  as BrokerName,      
---a.EserviceRequestId as OrganizationId,      
-----E.EserviceRequestNumber as encryptedEServiceRequestNumber,      
---a.EserviceRequestNumber as TradeLicenseNumber ,      
---     c.RequestForUserType,d.ClearanceExamType  ,
+--select organizationid from @TempOrgid  
+  
+if not exists (  
+select 1 from @TempOrgid1 where Brokerorgid  
+ in (@orgid))  
+begin  
+  
+return;  
+end  
+end  
+*/
+                /* End abode code by azhar for security concern regarding user rasing request for other organizations 01282020*/
+				--print @ExamPassedBrokerOnly
+				--SELECT *
+    --                FROM [etrade].[EServiceRequestsdetails] AS t2
+    --                     INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+    --                WHERE t2.OrganizationId = @orgid
+    --                      AND e.serviceid = @serviceid
+    --                      AND t2.RequesterUserId = @MobileUserid
+    --                      AND t2.StateId NOT IN('EServiceRequestDetailsCompletedState')              
+    --                     -- added by azhar for finalrejected             
+    --                     AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+    --                AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019 
+				-- IF(NOT EXISTS
+    --            (
+    --                SELECT top 1 1
+    --                FROM [etrade].[EServiceRequestsdetails] AS t2
+    --                     INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+    --                WHERE t2.OrganizationId = @orgid
+    --                      AND e.serviceid = @serviceid
+    --                      AND t2.RequesterUserId = @MobileUserid
+    --                      AND t2.StateId NOT IN('EServiceRequestDetailsCompletedState')              
+    --                     -- added by azhar for finalrejected             
+    --                     AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+    --                AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019  
 
- E.eservicerequestid,E.stateid,eservicerequestnumber,E.datecreated,E.datemodified,
---examcandidateinfoid,b.examsannouncementdetailsid,examresult,b.stateid,b.ownerorgid,
-exammark,EAD.passinggrade,
-CASE  WHEN exammark>=EAD.passinggrade THEN 'PASS' ELSE 'FAIL' END AS 'EXAMSTATUS', 
-----c.ArabicFirstName,c.Arabicsecondname,c.arabicthirdname,c.arabiclastname,
-----c.EnglishFirstName,c.EnglishSecondName,c.EnglishThirdName,c.EnglishLastName,
---isnull(c.ArabicFirstName,'')+isnull(c.Arabicsecondname,' ')+isnull(c.arabicthirdname,' ')+isnull(c.arabiclastname,' ') 'ArabicName',
---isnull(c.EnglishFirstName,'')+isnull(c.EnglishSecondName,' ')+isnull(c.EnglishThirdName,' ')+isnull(c.EnglishLastName,' ') 'EnglishName',
-ED.PassportNo,ED.PassportExpiryDate,ED.CivilID,
-ED.CivilIDExpiryDate,ED.Email,ED.MobileNumber,ED.Address
---FROM etrade.[EServiceRequests] a INNER JOIN [dbo].[examcandidateinfo] b ON a.eservicerequestid=b.eservicerequestid
---INNER JOIN etrade.[EServiceRequestsdetails] c on c.eservicerequestid=a.eservicerequestid
---INNER join [dbo].[examsannouncementDetails] d on d.examsannouncementdetailsid=b.examsannouncementdetailsid
--- inner join Types T on t.TypeId =c.RequestForUserType      
---     left join Types_ara T_ara on T.TypeId=T_ara.TypeId 
---WHERE a.requesteruserid=77 AND a.ServiceId=28
+    --            )
+    --            AND @ExamPassedBrokerOnly = 'no')
+				--BEGIN
+				--PRINT 'true'
+				--end
+                IF((Not EXISTS
+                (
+                    SELECT OrganizationId
+                    FROM [etrade].[EServiceRequestsdetails] AS t2
+                         INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+                    WHERE t2.OrganizationId = @orgid
+                          AND e.serviceid = @serviceid
+                          AND t2.RequesterUserId = @MobileUserid
+                          AND t2.StateId NOT IN('EServiceRequestDetailsCompletedState','EServicesRequestDetailsApprovedState')      --add by rama to allow user to create new request for print lost card        
+                         -- added by azhar for finalrejected             
+                         AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+                    AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019  
+					 
+					AND t2.stateid NOT IN ('EServicesRequestDetailsDeletedState')--06-02-2022 - existing issue , details table alone has deleted state
+                )
+                AND @ExamPassedBrokerOnly = 'no')
+						--Add by rama
+				 OR (@ExamPassedBrokerOnly = 'no' and @IsDRBroker=1
+                and  not EXISTS
+                (
+                    SELECT OrganizationId
+                    FROM [etrade].[EServiceRequestsdetails] AS t2
+                         INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+                    WHERE t2.OrganizationId = @orgid
+                          AND e.serviceid = @serviceid
+                          AND t2.RequesterUserId = @MobileUserid
+                          AND t2.StateId NOT IN('EServiceRequestDetailsCompletedState','EServicesRequestDetailsApprovedState')              
+                         -- added by azhar for finalrejected             
+                         AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+                    AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019  
+					 
+					AND t2.stateid NOT IN ('EServicesRequestDetailsDeletedState')--06-02-2022- existing issue , details table alone has deleted state
 
+                ))
+				-- end rama
+            OR (@ExamPassedBrokerOnly = 'yes'
+                and not EXISTS
+                (
+                    SELECT TOP 1 1
+                    FROM [etrade].[EServiceRequestsdetails] AS t2
+                         INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+                    WHERE (t2.RequestForUserId = @ChildOrgId or (@serviceid in (31,28) and @ChildOrgId is null ))
+                          AND e.serviceid = @serviceid
+                          AND t2.RequesterUserId = @MobileUserid
+                          AND t2.StateId not IN('EServiceRequestDetailsCompletedState','EServicesRequestDetailsApprovedState')      --add by rama to allow user to create new request for print lost card   )              
+                         -- added by azhar for finalrejected             
+                         AND e.StateId NOT IN('EServiceRequestFinalRejectedState')
+                    AND e.StateId NOT IN('EServiceRequestDeletedState')  -- 10/12/2019  
+					AND t2.stateid NOT IN ('EServicesRequestDetailsDeletedState')--06-02-2022- existing issue , details table alone has deleted state
+
+                )))
+                    BEGIN
+                        PRINT 'inside req';
+                        DECLARE @CounterValueStartPkidIDR INT= 0, @CounterValuePkEndR INT= 0;
+                        EXEC dbo.usp_MCPKCounters 
+                             @DataSourceName = 'EServiceRequests_pk', -- varchar(50)              
+                             -- @SeedValue = @dcCount              
+                             --,-- bigint              
+                             @CounterValueStart = @CounterValueStartPkidIDR OUTPUT, -- bigint              
+                             @CounterValueEnd = @CounterValuePkEndR OUTPUT; -- bigint              
+
+                        EXEC dbo.usp_MCPKCounters 
+                             @DataSourceName = @RequestdataSourceName, -- varchar(50)              
+                             -- @SeedValue = @dcCount              
+                             --,-- bigint              
+                             @CounterValueStart = @CounterValueStart OUTPUT, -- bigint              
+                             @CounterValueEnd = @CounterValueEnd OUTPUT; -- bigint              
+                        --select * from etrade.Eservices            
+                        --update etrade.Eservices  set prefix='RSR' where ServiceID='2'            
+                        --update etrade.Eservices  set prefix='RRB' where ServiceID='1'            
+                        INSERT INTO [etrade].[EServiceRequests]
+                        (EServiceRequestid, 
+                         eservicerequestnumber, 
+                         serviceid, 
+                         DateCreated, 
+                         DateModified, 
+                         stateid, 
+                         createdby, 
+                         RequesterUserId
+                        )
+                               SELECT TOP 1 @CounterValueStartPkidIDR, 
+                                            (@prefix + '/' + CONVERT(VARCHAR(100), @CounterValueStart) + '/' + CONVERT(VARCHAR(MAX), RIGHT(YEAR(GETDATE()), 2))), 
+                                            @serviceid, 
+                                            GETDATE() AS [DateCreated], 
+                                            '', 
+                                            @RequestState
+                                            ,--'EServiceRequestCreatedState'             
+                                            @Userid, 
+                                            @MobileUserid;            
+                        --FROM [etrade].[EServiceRequests] E            
+                        --SELECT *            
+                        --FROM [etrade].[EServiceRequests]            
+                        --WHERE EServiceRequestid = @CounterValueStart            
+						                        PRINT @@ROWCOUNT;
+
+                        PRINT('cehckhere');
+                        IF EXISTS
+                        (
+                            SELECT 1
+                            FROM [etrade].[EServiceRequests]
+                            WHERE EServiceRequestid = @CounterValueStartPkidIDR
+                        ) --@@ROWCOUNT = '1')            
+                        PRINT ('insidedetails');  
+
+						set @eservicerequestid = @CounterValueStartPkidIDR; --set value for@eservicerequestid  qasem00
+						
+                            BEGIN
+                                DECLARE @ForeignEserviceid INT;
+                                SET @ForeignEserviceid = @CounterValueStartPkidIDR;
+                                SET @CounterValueStart = 0;
+                                SET @CounterValueEnd = 0;
+                                EXEC dbo.usp_MCPKCounters 
+                                     @DataSourceName = @RequestDetailsdataSourceName, 
+                                     @CounterValueStart = @CounterValueStart OUTPUT, 
+                                     @CounterValueEnd = @CounterValueEnd OUTPUT;
+                                DECLARE @BrokerEnglishNameVal NVARCHAR(100), @BrokerArabicNameVal NVARCHAR(100), @BrokerTypeVal NVARCHAR(100), 
+								@CandidateCivilIdVal NVARCHAR(100), @CivilIdExpiryDateVal NVARCHAR(100), @PassportNoVal NVARCHAR(100), @PassportNoExpiryDateVal NVARCHAR(100), 
+								@NationalityVal NVARCHAR(100)=null, @MobileNoVal NVARCHAR(100), @EmailVal NVARCHAR(100), @AddressVal NVARCHAR(100),
+								@ArabicFrstName NVARCHAR(100), @ArabicsecndName NVARCHAR(100), @ArabicthrdName NVARCHAR(100), @ArabiclstName NVARCHAR(100),
+								@EnglishFrstName NVARCHAR(100), @EnglishsecndName NVARCHAR(100), @EnglishthrdName NVARCHAR(100), @EnglishlstName NVARCHAR(100),
+								@OrganizationName NVARCHAR(200),
+								@RequestForUserTypeOrBrokerType nvarchar(200),@LicExpiryDate NVARCHAR(100),@CommercialLicNo NVARCHAR(100);
+                                PRINT 'setting exam pass candidate values ' + @ExamPassedBrokerOnly;
+                                IF(@ExamPassedBrokerOnly = 'yes')
+                                    BEGIN
+                                        PRINT 'setting exam pass candidate values';
+                                        SELECT @BrokerEnglishNameVal = ISNULL(ED.EnglishFirstName, '')+' '+  ISNULL(ED.EnglishSecondName, '')+' '+ ISNULL(ED.EnglishThirdName, ''),-- + ISNULL(ED.EnglishLastName, ' '), 
+                                               @BrokerTypeVal = ISNULL(T_ara.Name, T.Name), 
+                                               @BrokerArabicNameVal = ISNULL(ED.ArabicFirstName, '') +' '+ISNULL(ED.Arabicsecondname, '') +' '+ ISNULL(ED.arabicthirdname, '') ,--+ ISNULL(ED.arabiclastname, ' '), 
+                                               @CandidateCivilIdVal = ED.CivilId, 
+                                               @CivilIdExpiryDateVal = ED.CivilIDExpiryDate, 
+                                               @PassportNoVal = ED.PassportNo, 
+                                               @PassportNoExpiryDateVal = ED.PassportExpiryDate, 
+                                               @NationalityVal = ED.Nationality, 
+                                               @MobileNoVal = ED.MobileNumber, 
+                                               @EmailVal = ED.Email, 
+                                               @AddressVal = ED.Address,
+											   @RequestForUserTypeOrBrokerType=ed.RequestForUserType
+											   ,
+											   @ArabicFrstName=ISNULL(ED.ArabicFirstName, ''),
+											   @ArabicsecndName=ISNULL(ED.Arabicsecondname, ''),
+											   @ArabicthrdName=ISNULL(ED.arabicthirdname, ''),
+											   @ArabiclstName=ISNULL(ED.arabiclastname, ''),
+											   @EnglishFrstName=ISNULL(ED.EnglishFirstName, ''),
+											   @EnglishsecndName=ISNULL(ED.EnglishSecondName, ''),
+											   @EnglishthrdName=ISNULL(ED.EnglishThirdName, ''),
+											   @EnglishlstName=ISNULL(ED.EnglishLastName, '')
+                                        FROM ExamCandidateInfo ECI
+                                             INNER JOIN ExamsAnnouncementDetails EAD ON ECI.ExamsAnnouncementDetailsId = EAD.ExamsAnnouncementDetailsId
+                                             INNER JOIN ExamsAnnouncements EA ON EAD.ExamsAnnouncementId = EA.ExamsAnnouncementId
+                                             INNER JOIN etrade.EServiceRequests E ON E.EserviceRequestId = ECI.EServiceRequestId
+                                             INNER JOIN etrade.EServiceRequestsDetails ED ON E.EserviceRequestId = ED.EserviceRequestId
+                                             INNER JOIN Types T ON t.TypeId = ed.RequestForUserType
+                                             LEFT JOIN Types_ara T_ara ON T.TypeId = T_ara.TypeId
+                                        WHERE e.RequesterUserId = @mobileUserId --AND e.EServiceRequestId=@orgid
+                                              AND eci.ExamResult =
+                                        (
+                                            SELECT typeid
+                                            FROM Types
+                                            WHERE Name = 'passed the exam'
+                                                  AND StateId = 'EserviceExamResultsTypesCreatedState'
+                                        )
+                                              AND eci.DateModified >= DATEADD(month, -6, GETDATE())
+                                              AND e.EServiceRequestId NOT IN
+                                        (
+                                            SELECT ISNULL(OrganizationId, 0)
+                                            FROM etrade.EServiceRequestsDetails
+                                            WHERE RequestServicesId = @serviceid
+                                                  AND StateId IN('EServiceRequestDetailsProceedState', 'EServiceRequestDetailsCompletedState', 'EServicesRequestDetailsSubmittedState', 'EServiceRequestDetailsReSubmittedState')
+                                        )      
+                                             -- and StateId  in ('EServiceRequestSubmittedState','EServiceRequestCreatedState')) 
+                                             AND (ECI.ExamCandidateInfoId = @ChildOrgId or(@serviceid in (31,28) and @ChildOrgId is null));
+											 PRINT @CandidateCivilIdVal
+
+							--				   SELECT @BrokerEnglishNameVal ,
+       --                                        @BrokerTypeVal ,
+       --                                        @BrokerArabicNameVal,
+       --                                        @CandidateCivilIdVal ,
+       --                                        @CivilIdExpiryDateVal ,
+       --                                        @PassportNoVal ,
+       --                                        @PassportNoExpiryDateVal ,
+       --                                        @NationalityVal ,
+       --                                        @MobileNoVal,
+       --                                        @EmailVal ,
+       --                                        @AddressVal ,
+			    --@ArabicFrstName,
+							--				   @ArabicsecndName,
+							--				   @ArabicthrdName,
+							--				   @ArabiclstName,
+							--				   @EnglishFrstName,
+							--				   @EnglishsecndName,
+							--				   @EnglishthrdName,
+							--				   @EnglishlstName
+                                END;
+								IF(@serviceid=17)--new change block 03-02-2022 fix for existing issue , license issuance request when not submitted 
+								--immeditaely and opened again for submit then names are not saved or missing
+								BEGIN
+								select @ArabicFrstName=ISNULL(ED.ArabicFirstName, ''),
+											   @ArabicsecndName=ISNULL(ED.Arabicsecondname, ''),
+											   @ArabicthrdName=ISNULL(ED.arabicthirdname, ''),
+											   @ArabiclstName=ISNULL(ED.arabiclastname, ''),
+											   @EnglishFrstName=ISNULL(ED.EnglishFirstName, ''),
+											   @EnglishsecndName=ISNULL(ED.EnglishSecondName, ''),
+											   @EnglishthrdName=ISNULL(ED.EnglishThirdName, ''),
+											   @EnglishlstName=ISNULL(ED.EnglishLastName, '')
+											   FROM etrade.eservicerequestsdetails ED WHERE eservicerequestid=@orgid
+								end
+								PRINT @CandidateCivilIdVal
+								--add by rama 
+								if(@IsDRBroker=1)
+								begin
+									print('qasem12');	
+								Declare @FileNo varchar;
+								
+								select @ArabicFrstName=ISNULL(p.FirstName, ''),
+											   @ArabicsecndName=ISNULL(p.SecondName, ''),
+											   @ArabicthrdName=ISNULL(p.ThirdName, ''),
+											   @ArabiclstName=ISNULL(p.LastName, ''),
+											   @EnglishFrstName=ISNULL(ED.BrokerEngFirstName, ''),
+											   @EnglishlstName=ISNULL(ED.BrokerEngLastName, ''),
+											   @civilIdvalue =ISNULL(ED.BrokerCivilIdNo, ''),
+											   @NationalityVal =ISNULL(ED.BrokerNationality, ''),
+											   @licenseNovalue =ISNULL(ED.BrokerLicenseNo, ''),
+												@FileNo=ISNULL(ED.BrokerFileNo, ''),
+												@PassportNoVal=ISNULL(ED.BrokerPassPortNo,''), --omar
+												@PassportNoExpiryDateVal=ISNULL(ED.BrokerPassPortExpiryDate,''),--omar
+												@MobileNoVal=ISNULL(C.MobileTelNumber,''),--omar
+												@LicExpiryDate=ISNULL(null,null),--omar
+												@CommercialLicNo=ISNULL(ED.CommercialLicenseNo,''),--omar
+												@EmailVal=COALESCE(C.EMail,U.EMAILID,''),--qasem5
+												@BrokerTypeId= ISNULL(ED.DRBrokerType,null),
+												@OrganizationName = case @lang when 'eng' then O.Name else O.LocalDescription end ,
+												@CivilIdExpiryDateVal =isnull(ED.brokerCivilIdExpirydate,'')  --qasem4
+	
+                        FROM People P
+                            INNER JOIN DRPeople ED ON ED.PersonalId = P.PersonalId  
+							Left Join Contacts C on C.ParentId=P.PersonalId--omar
+							Left Join Organizations O on O.OrganizationId=ED.DROrganizationId--omar
+							Left Join USERS U on U.PersonalId=P.PersonalId--qasem5
+							--left join Types BrokerType on BrokerType.TypeId = ED.DRBrokerType--omar
+							--LEFT JOIN Types_ara T ON BrokerType.TypeId = T.TypeId--omar
+											  WHERE Ed.PersonalId=@PersonalId
+
+											         INSERT INTO [etrade].[EServiceRequestsdetails]
+                                (EServiceRequestdetailsid, 
+                                 eservicerequestid, 
+                                 organizationid, 
+                                 stateid, 
+                                 createdby, 
+                                 modifiedby, 
+                                 RequestForUserId, 
+                                 RequestForName, 
+                                 RequestForEmail
+								 ,ArabicFirstName,ArabicSecondname,arabicthirdname,arabiclastname,englishfirstname,englishlastname
+                                 , -- No mcuserid and email id for messengers, so RequesterMobileruserid email will be considered             
+                                 RequestServicesId, 
+                                 RequesterUserid, 
+                                 RequestForUserType, 
+                                 CivilID, 
+                                 LicenseNumber, 
+                                 etrade.EServiceRequestsDetails.CivilIDExpiryDate, 
+                                 etrade.EServiceRequestsDetails.PassportNo, 
+                                 etrade.EServiceRequestsDetails.PassportExpiryDate, 
+                                 etrade.EServiceRequestsDetails.Email, 
+                                 etrade.EServiceRequestsDetails.MobileNumber, 
+                                 etrade.EServiceRequestsDetails.Address,
+								 Nationality,
+								 BrokFileNo,
+								 LicenseNumberExpiryDate,--omar
+								 CommercialLicenseNo,--omar
+								 RequesterArabicName,
+								 MCPersonalId--kasem
+                                )
+                                VALUES
+                                (@CounterValueStart, 
+                                 @ForeignEserviceid, 
+                                 @orgid, 
+                                 @RequestDetailState
+                                 ,--'EServicesRequestDetailsCreatedState'--'EServiceDetailsRequestCreatedState'             
+                                 @Userid, 
+                                 '', 
+                                 @ChildOrgId
+                                 ,--NULL--@RequestedForMobileUserid--considering case it can be for other non app users too  --16-11-2021 earlier null , now saving Candidate info ID 
+                                 --people wo passed exam but yet to get license          
+                                 --,(SELECT  FirstName +' '+LastName FROM ETRADE.MobileUser WHERE UserId=@RequestedForMobileUserid)            
+                               
+                                    (SELECT FirstName + ' ' + LastName
+                                    FROM ETRADE.MobileUser
+                                    WHERE UserId = @MobileUserid),
+                                
+							
+                                    (SELECT EmailId
+                                    FROM ETRADE.MobileUser
+                                    WHERE UserId = @MobileUserid),
+                               
+								  @ArabicFrstName,
+											   @ArabicsecndName,
+											   @ArabicthrdName,
+											   @ArabiclstName,
+											   @EnglishFrstName,
+										
+											   @EnglishlstName,
+                                
+                                 @serviceid, 
+                                 @MobileUserid, 
+								 CASE
+                                     WHEN @ExamPassedBrokerOnly = 'yes'
+                                     THEN @RequestForUserTypeOrBrokerType
+                                     ELSE @BrokerTypeId
+                                 END,
+                                  @civilIdvalue 
+                                 , 
+                                 @licenseNovalue,
+                                 @CivilIdExpiryDateVal, 
+                                 @PassportNoVal, 
+                                 @PassportNoExpiryDateVal, 
+                                 @EmailVal, 
+                                 @MobileNoVal, 
+                                 @AddressVal,
+								 @NationalityVal,
+								 @FileNo,
+								 @LicExpiryDate,--omar
+								 @CommercialLicNo,--omar
+								 @OrganizationName,--omar
+								 @PersonalId
+                                );
+								end;
+							 -- end rama
+							 else
+							 begin --add begin by qasem00
+							 print 'test'
+                                INSERT INTO [etrade].[EServiceRequestsdetails]
+                                (EServiceRequestdetailsid, 
+                                 eservicerequestid, 
+                                 organizationid, 
+                                 stateid, 
+                                 createdby, 
+                                 modifiedby, 
+                                 RequestForUserId, 
+                                 RequestForName, 
+                                 RequestForEmail
+								 ,ArabicFirstName,ArabicSecondname,arabicthirdname,arabiclastname,englishfirstname,englishsecondname,englishthirdname,englishlastname
+                                 , -- No mcuserid and email id for messengers, so RequesterMobileruserid email will be considered             
+                                 RequestServicesId, 
+                                 RequesterUserid, 
+                                 RequestForUserType, 
+                                 CivilID, 
+                                 LicenseNumber, 
+                                 etrade.EServiceRequestsDetails.CivilIDExpiryDate, 
+                                 etrade.EServiceRequestsDetails.PassportNo, 
+                                 etrade.EServiceRequestsDetails.PassportExpiryDate, 
+                                 etrade.EServiceRequestsDetails.Email, 
+                                 etrade.EServiceRequestsDetails.MobileNumber, 
+                                 etrade.EServiceRequestsDetails.Address,
+								 Nationality--,qasem5
+								 , RequesterArabicName --rama,24
+								 , RequesterEnglishName -- rama24
+								-- LicenseNumberExpiryDate qasem5
+                                )
+                                VALUES
+                                (@CounterValueStart, 
+                                 @ForeignEserviceid, 
+                                 case when @ExamPassedBrokerOnly = 'yes' THEN @ForeignEserviceid else @orgid end, 
+                                 @RequestDetailState
+                                 ,--'EServicesRequestDetailsCreatedState'--'EServiceDetailsRequestCreatedState'             
+                                 @Userid, 
+                                 '', 
+                                 @ChildOrgId
+                                 ,--NULL--@RequestedForMobileUserid--considering case it can be for other non app users too  --16-11-2021 earlier null , now saving Candidate info ID 
+                                 --people wo passed exam but yet to get license          
+                                 --,(SELECT  FirstName +' '+LastName FROM ETRADE.MobileUser WHERE UserId=@RequestedForMobileUserid)            
+                                 CASE
+                                     WHEN @ExamPassedBrokerOnly = 'yes'
+                                     THEN @BrokerArabicNameVal
+                                     ELSE ISNULL(
+                                (
+                                    SELECT Name
+                                    FROM Organizations
+                                    WHERE OrganizationId = @RequestedForMobileUserid
+                                ),
+                                (
+                                    SELECT FirstName + ' ' + LastName
+                                    FROM ETRADE.MobileUser
+                                    WHERE UserId = @MobileUserid
+                                ))
+                                 END,
+								  CASE
+                                     WHEN @ExamPassedBrokerOnly = 'yes'
+                                     THEN @EmailVal
+                                     ELSE ISNULL(
+                                (
+                                    SELECT a.EMAILID
+                                    FROM users a
+                                         INNER JOIN Organizations b ON a.OrganizationId = b.OrganizationId
+                                    WHERE a.OrganizationId = @RequestedForMobileUserid
+                                ),
+                                (
+                                    SELECT EmailId
+                                    FROM ETRADE.MobileUser
+                                    WHERE UserId = @MobileUserid
+                                ))
+                                 END, 
+								  @ArabicFrstName,
+											   @ArabicsecndName,
+											   @ArabicthrdName,
+											   @ArabiclstName,
+											   @EnglishFrstName,
+											   @EnglishsecndName,
+											   @EnglishthrdName,
+											   @EnglishlstName,
+                                
+                                 @serviceid, 
+                                 @MobileUserid, 
+								 CASE
+                                     WHEN @ExamPassedBrokerOnly = 'yes'
+                                     THEN @RequestForUserTypeOrBrokerType
+                                     ELSE @BrokerTypeId
+                                 END,
+                                 CASE
+                                     WHEN @ExamPassedBrokerOnly = 'yes'
+                                     THEN @CandidateCivilIdVal
+                                     ELSE @civilIdvalue 
+                                 END, 
+                                 @licenseNovalue,
+                                 @CivilIdExpiryDateVal, 
+                                 @PassportNoVal, 
+                                 @PassportNoExpiryDateVal, 
+                                 @EmailVal, 
+                                 @MobileNoVal, 
+                                 @AddressVal,
+								 @NationalityVal --,qasem5
+								, (SELECT LocalDescription FROM    Organizations WHERE    OrganizationId = @orgid) --rama24
+								, (SELECT [name] FROM    Organizations WHERE    OrganizationId = @orgid) --rama24
+
+
+								-- ISNULL((select top 1 DtOfExpiry from BrokLicenseDetails where BrokerOrgId=@OrgId),'') --omar qasem5
+                                );
+                                SET @eservicerequestid = @ForeignEserviceid;
+								PRINT 'after error'
+								--SELECT @CounterValueStart, 
+        --                         @ForeignEserviceid, 
+        --                         @orgid, 
+        --                         @RequestDetailState
+        --                         ,--'EServicesRequestDetailsCreatedState'--'EServiceDetailsRequestCreatedState'             
+        --                         @Userid, 
+        --                         '', 
+        --                         @ChildOrgId
+        --                         ,--NULL--@RequestedForMobileUserid--considering case it can be for other non app users too  --16-11-2021 earlier null , now saving Candidate info ID 
+        --                         --people wo passed exam but yet to get license          
+        --                         --,(SELECT  FirstName +' '+LastName FROM ETRADE.MobileUser WHERE UserId=@RequestedForMobileUserid)            
+        --                         CASE
+        --                             WHEN @ExamPassedBrokerOnly = 'yes'
+        --                             THEN @BrokerArabicNameVal
+        --                             ELSE ISNULL(
+        --                        (
+        --                            SELECT Name
+        --                            FROM Organizations
+        --                            WHERE OrganizationId = @RequestedForMobileUserid
+        --                        ),
+        --                        (
+        --                            SELECT FirstName + ' ' + LastName
+        --                            FROM ETRADE.MobileUser
+        --                            WHERE UserId = @MobileUserid
+        --                        ))
+        --                         END,
+        --                         CASE
+        --                             WHEN @ExamPassedBrokerOnly = 'yes'
+        --                             THEN @EmailVal
+        --                             ELSE ISNULL(
+        --                        (
+        --                            SELECT a.EMAILID
+        --                            FROM users a
+        --                                 INNER JOIN Organizations b ON a.OrganizationId = b.OrganizationId
+        --                            WHERE a.OrganizationId = @RequestedForMobileUserid
+        --                        ),
+        --                        (
+        --                            SELECT EmailId
+        --                            FROM ETRADE.MobileUser
+        --                            WHERE UserId = @MobileUserid
+        --                        ))
+        --                         END, 
+        --                         @serviceid, 
+        --                         @MobileUserid, 
+        --                         @BrokerTypeId,
+        --                         CASE
+        --                             WHEN @ExamPassedBrokerOnly = 'yes'
+        --                             THEN @CandidateCivilIdVal
+        --                             ELSE @civilIdvalue
+        --                         END, 
+        --                         @licenseNovalue, 
+        --                         @CivilIdExpiryDateVal, 
+        --                         @PassportNoVal, 
+        --                         @PassportNoExpiryDateVal, 
+        --                         @MobileNoVal, 
+        --                         @EmailVal, 
+        --                         @AddressVal
+                                /* audit entries for eserviceRequest and eserviceRequestDetails - start */
+
+                                INSERT INTO ETRADE.[$EServiceRequests]
+                                ([$AuditTrailId], 
+                                 [$UserId], 
+                                 [$Operation], 
+                                 [$DateTime], 
+                                 [$DataProfileClassId], 
+                                 [$IPId], 
+                                 [$SessionId], 
+                                 [EServiceRequestId], 
+                                 [EServiceRequestNumber], 
+                                 [RequestSubmissionDateTime], 
+                                 [RequestCompletionDateTime], 
+                                 [StateId], 
+                                 [DateCreated], 
+                                 [CreatedBy], 
+                                 [ModifiedBy], 
+                                 [DateModified], 
+                                 [OwnerOrgId], 
+                                 [OwnerLocId], 
+                                 [ServiceId], 
+                                 [RequesterUserId], 
+                                 [RequesterUserType], 
+                                 [DeliveredDate], 
+                                 [DeliveredBy], 
+                                 [ApprovedDate], 
+                                 [ApprovedBy], 
+                                 [KNetReceiptNo]
+                                )
+                                       SELECT NEWID(), 
+                                              ISNULL(@MobileUserid, @Userid), 
+                                              1, 
+                                              GETDATE(), 
+                                              'EServiceRequests', 
+                                              '127.0.0.1', 
+                                              'system', 
+                                              [EServiceRequestId], 
+                                              [EServiceRequestNumber], 
+                                              [RequestSubmissionDateTime], 
+                                              [RequestCompletionDateTime], 
+                                              [StateId], 
+                                              GETDATE(), 
+                                              @MobileUserid, 
+                                              ISNULL(@MobileUserid, @Userid), 
+                                              GETDATE(), 
+                                              [OwnerOrgId], 
+                                              [OwnerLocId], 
+                                              [ServiceId], 
+                                              [RequesterUserId], 
+                                              [RequesterUserType], 
+                                              [DeliveredDate], 
+                                              [DeliveredBy], 
+                                              [ApprovedDate], 
+                                              [ApprovedBy], 
+                                              [KNetReceiptNo]
+                                       FROM ETRADE.EServiceRequests
+                                       WHERE EServiceRequestId = @EServiceRequestId;
+                                INSERT INTO ETRADE.[$EServiceRequestsDetails]
+                                ([$AuditTrailId], 
+                                 [$UserId], 
+                                 [$Operation], 
+                                 [$DateTime], 
+                                 [$DataProfileClassId], 
+                                 [$IPId], 
+                                 [$SessionId], 
+                                 [EserviceRequestDetailsId], 
+                                 [EserviceRequestId], 
+                                 [RequestForUserType], 
+                                 [RequestServicesId], 
+                                 [OrganizationId], 
+                                 [RequesterLicenseNumber], 
+                                 [RequesterArabicName], 
+                                 [RequesterEnglishName], 
+                                 [ArabicFirstName], 
+                                 [ArabicSecondName], 
+                                 [ArabicThirdName], 
+                                 [ArabicLastName], 
+                                 [EnglishFirstName], 
+                                 [EnglishSecondName], 
+                                 [EnglishThirdName], 
+                                 [EnglishLastName], 
+                                 [Nationality], 
+                                 [CivilID], 
+                                 [CivilIDExpiryDate], 
+                                 [MobileNumber], 
+                                 [PassportNo], 
+                                 [PassportExpiryDate], 
+                                 [Address], 
+                                 [Email], 
+                                 [LicenseNumber], 
+                                 [LicenseNumberExpiryDate], 
+                                 [Remarks], 
+                                 [RejectionRemarks], 
+                                 [RequestForVisit], 
+                                 [RequestForVisitRemarks], 
+                                 [ExamAddmissionId], 
+                                 [ExamDetailsId], 
+                                 [status], 
+                                 [StateId], 
+                                 [DateCreated], 
+                                 [CreatedBy], 
+                                 [ModifiedBy], 
+                                 [DateModified], 
+                                 [OwnerOrgId], 
+                                 [OwnerLocId], 
+                                 [RequesterUserId], 
+                                 [RequestForName], 
+                                 [RequestForEmail], 
+                                 [Gender], 
+                                 [RequestForUserId], 
+                                 [BrokFileNo], 
+                                 [AssociatedOrgIds]
+                                )
+                                       SELECT NEWID(), 
+                                              ISNULL(@MobileUserid, @Userid), 
+                                              1, 
+                                              GETDATE(), 
+                                              'EServiceRequestsDetails', 
+                                              '127.0.0.1', 
+                                              'system', 
+                                              [EserviceRequestDetailsId], 
+                                              [EserviceRequestId], 
+                                              [RequestForUserType], 
+                                              [RequestServicesId], 
+                                              [OrganizationId], 
+                                              [RequesterLicenseNumber], 
+                                              [RequesterArabicName], 
+                                              [RequesterEnglishName], 
+                                              [ArabicFirstName], 
+                                              [ArabicSecondName], 
+                                              [ArabicThirdName], 
+                                              [ArabicLastName], 
+                                              [EnglishFirstName], 
+                                              [EnglishSecondName], 
+                                              [EnglishThirdName], 
+                                              [EnglishLastName], 
+                                              [Nationality], 
+                                              [CivilID], 
+                                              [CivilIDExpiryDate], 
+                                              [MobileNumber], 
+                                              [PassportNo], 
+                                              [PassportExpiryDate], 
+                                              [Address], 
+                                              [Email], 
+                                              [LicenseNumber], 
+                                              [LicenseNumberExpiryDate], 
+                                              [Remarks], 
+                                              [RejectionRemarks], 
+                                              [RequestForVisit], 
+                                              [RequestForVisitRemarks], 
+                                              [ExamAddmissionId], 
+                                              [ExamDetailsId], 
+                                              [status], 
+                                              [StateId], 
+                                              [DateCreated], 
+                                              [CreatedBy], 
+                                              [ModifiedBy], 
+                                              [DateModified], 
+                                              [OwnerOrgId], 
+                                              [OwnerLocId], 
+                                              [RequesterUserId], 
+                                              [RequestForName], 
+                                              [RequestForEmail], 
+                                              [Gender], 
+                                              [RequestForUserId], 
+                                              [BrokFileNo], 
+                                              [AssociatedOrgIds]
+                                       FROM etrade.EServiceRequestsDetails
+                                       WHERE EServiceRequestId = @EServiceRequestId;
+
+                                /* audit entries for eserviceRequest and eserviceRequestDetails - start */
+                        END; --for else add by qasem00
+                        END;
+                        IF(@prefix NOT LIKE '%LI%' and @IsDRBroker<>1 and @serviceid not in(31,28))--AND @ExamPassedBrokerOnly='yes') --and @IsDRBroker<>1 by rama rama24
+                            BEGIN
+							
+                                EXEC etrade.usp_GetGenBrokerDetailsforBRSEservice 
+                                     @orgid, 
+                                     '', 
+                                     @ForeignEserviceid, 
+                                     @lang
+									 , 
+                                     @ExamPassedBrokerOnly, 
+                                     @MobileUserid, 
+                                     @ChildOrgId; --qasem6-12 remove ;
+                                PRINT('moath ');
+                        END;
+                            ELSE
+							
+                            BEGIN
+                                PRINT('camehere for BrokerDetails different block');
+								PRINT  @orgid
+								PRINT 'params'
+                                SELECT 
+								--ISNULL(BrokerType.LocalDescription, BrokerType.Name) AS BrokerType, 
+  case when @lang='ar' then  ISNULL(BrokerType.LocalDescription, BrokerType.Name) else ISNULL(BrokerType.Name, BrokerType.LocalDescription) end   AS BrokerType, 
+                                       ers.RequestForUserType, -- rama add ers to all fields
+                                       (ers.ArabicFirstName + ' ' + ers.ArabicSecondName + ' ' + ers.ArabicThirdName+ ' ' + ers.ArabicLastName ) AS BrokerNameAra, --+ ' ' + ers.ArabicLastName
+                                       (ers.EnglishFirstName + ' ' + isnull(ers.EnglishSecondName,'') + ' ' + isnull(ers.EnglishThirdName,'') + ' ' + ers.EnglishLastName) AS BrokerEnglishName--+ ' ' + ers.EnglishLastName -- check by rama if  broker firstname and third is null or not for DR requests
+                                       ,
+
+                                       --,RequestForName as BrokerNameAra      
+									  --start rama24 
+                                       case 
+									   when @serviceid in(31,28) and @lang ='eng'
+									   then
+									   ers.RequesterEnglishName
+									   else 
+									   ers.RequesterArabicName
+									   end
+									   AS parentname ,    --end rama24       
+                                       --RequestForName as BrokerEnglishName,            
+                                       ers.CivilID, 
+ISNULL(CONVERT(VARCHAR(10), ERS.CivilIDExpiryDate, 103), CONVERT(VARCHAR(10), EARS.CivilIDExpiryDate, 103)) AS CivilIdExpiryDate, 
+ers.PassportNo, 
+                                       ISNULL(CONVERT(VARCHAR(10), ers.PassportExpiryDate, 103), CONVERT(VARCHAR(10), ers.PassportExpiryDate, 103)) AS PassportExpirydate, 
+                                       ISNULL(CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103), CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103)) AS TLExpiryDate,  
+                                                   ISNULL(ERS.MobileNumber, EARS.MobileNumber) AS MobileNumber,-- MobileNumber, rama
+                                      ISNULL(ERS.email, EARS.email) AS email,  -- email, rama
+                                      /* Address,rama
+                                       CASE
+                                           WHEN @lang = 'ar'
+                                           THEN Ac.localdescription
+                                           ELSE Ac.Name
+                                       END AS nationality, */
+									   ISNULL(ERS.Address, EARS.Address) AS Address,--rama
+                                       CASE
+                                           WHEN @lang = 'ar'
+                                           THEN ISNULL(Ac.localdescription, Ac1.LocalDescription)
+                                           ELSE ISNULL(Ac.Name, Ac1.name)
+                                       END AS nationality,  
+									   ers.CommercialLicenseNo, --omar
+                                  
+									    BG.BGNo as BGNo,  --omar
+										case @lang when 'eng' then O.Name else O.LocalDescription end  BankName,   
+								  BG.BankId BankId,       --omar  
+								 -- bgd.BGIssueDt,   
+									--BG.BGIssueDt As BGIssueDt,  --omar   
+								 -- BG.BGExpiryDt As BGExpiryDate,  --omar   
+								 CONVERT(VARCHAR(10), BG.BGIssueDt, 103) As BGIssueDt, --qasem3
+									CONVERT(VARCHAR(10), BG.BGExpiryDt, 103) As BGExpiryDate, --qasem3
+								  BG.StateId   AS BGStatus,  --omar
+                                       'BrokerDetails' AS "TableName", 
+                                       *
+                                FROM etrade.EServiceRequestsDetails ERS
+                                     LEFT JOIN types BrokerType ON ERS.RequestForUserType = BrokerType.TypeId
+									 	 LEFT JOIN etrade.EServiceRequestsDetails EARS ON ERS.OrganizationId = EARS.EserviceRequestId --rama
+                                     LEFT JOIN AllCountries Ac1 ON EARS.Nationality = Ac1.LocationId--rama
+                                     LEFT JOIN AllCountries Ac ON ers.Nationality = Ac.LocationId
+									 left join DRPeople DR on DR.PersonalId = ERS.MCPersonalId --omar
+									 left join BrokBGDetails BG on DR.DRPeopleId = BG.BrokerOrgId --omar
+									 left join Organizations O on BG.BankId = O.OrganizationId
+                                WHERE ERS.EserviceRequestId =  @eservicerequestid-- @EServiceRequestId--@orgid -- rama add eservecerequestid nstead of @orgId
+                                      -- 10/12/2019  
+                                      AND ERS.StateId NOT IN('EServicesRequestDetailsDeletedState');
+
+                                -- select * from AllCountries where name='india'            
+                        END;
+                END
+
+                                --added -siraj            ;
+                    ELSE
+                    BEGIN            
+                        --print('new')       
+                        -- get eservicerequestid for all requests  
+
+                        IF(@requestNumber IS NOT NULL)
+                            BEGIN
+                                PRINT('@requestNumber from here');
+								print (@requestNumber);
+                                SELECT @eservicerequestid = e.EserviceRequestId
+                                FROM [etrade].[EServiceRequestsdetails] AS t2
+                                     INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+                                WHERE t2.OrganizationId = @orgid
+                                      AND e.serviceid = @serviceid
+                                      AND t2.RequesterUserId = @MobileUserid
+                                      AND e.EServiceRequestNumber = @requestNumber
+                                      AND t2.StateId NOT IN('EServicesRequestDetailsDeletedState');
+                                PRINT(@eservicerequestid);
+                        END;
+                            ELSE
+                            BEGIN
+                                PRINT('@requestNumber from here2');
+								PRINT @orgid
+								PRINT @ChildOrgId
+                                SELECT  @eservicerequestid = e.EserviceRequestId
+                                FROM [etrade].[EServiceRequestsdetails] AS t2
+                                     INNER JOIN [etrade].[EServiceRequests] E ON t2.EserviceRequestId = E.EserviceRequestId
+                                WHERE((t2.OrganizationId = @orgid
+                                       AND @ExamPassedBrokerOnly = 'no')
+                                      OR ((t2.RequestForUserId = @ChildOrgId or ( t2.RequestForUserId is null and @serviceid in (28,31))) --rama
+                                          AND @ExamPassedBrokerOnly = 'yes'
+										  ))
+                                     AND e.serviceid = @serviceid
+                                     AND t2.RequesterUserId = @MobileUserid
+                                     AND t2.StateId NOT IN('EServicesRequestDetailsDeletedState',
+									 'EServiceRequestDetailsCompletedState');
+                        END;
+
+                        -- this if statemnet is for License issuance specific case in If all details will come for all service and else for licesne issueance            
+                        IF(@prefix NOT LIKE '%LI%' AND @ExamPassedBrokerOnly='no' and @IsDRBroker=0 ) --and @IsDRBroker=0  add by rama
+                            BEGIN
+                                PRINT(' camehere1new');            
+                                --azhar commneted fortesting             
+                                -- EXEC etrade.usp_GetGenBrokerDetailsforBRSEservice @orgid,'',@eservicerequestid            
+                                PRINT(@orgid);
+                                PRINT @serviceid;
+                                PRINT @eservicerequestid;
+                                PRINT @lang;
+                                PRINT @ExamPassedBrokerOnly;
+                                PRINT @MobileUserid;
+                                PRINT @ChildOrgId;
+                                EXEC etrade.usp_GetGenBrokerDetailsforBRSEservice 
+                                     @orgid, 
+                                     @serviceid, 
+                                     @eservicerequestid, 
+                                     @lang
+									 , 
+                                     @ExamPassedBrokerOnly, 
+                                     @MobileUserid, 
+                                     @ChildOrgId;
+                                PRINT 'etrade.usp_GetGenBrokerDetailsforBRSEservice  call completed';
+                        END;
+                            ELSE
+                            BEGIN
+                                PRINT('camehere2 2nd  brokerdetails');
+				PRINT @ExamPassedBrokerOnly
+				PRINT @ChildOrgId
+				PRINT 'params'
+				
+                                SELECT 
+								--ISNULL(BrokerType.LocalDescription, BrokerType.Name) AS BrokerType,
+								  case when @lang='ar' then  ISNULL(BrokerType.LocalDescription, BrokerType.Name) else ISNULL(BrokerType.Name, BrokerType.LocalDescription) end   AS BrokerType, 
  
--- select  e.RequesterUserId,  T.name as EseBrokerType,ISNULL(T_ara.Name,T.Name) as BrokerType  ,       
--- 'SubBrokerDetails' as "TableName" ,      
-      
---ED.RequestForName  as BrokerName,      
---E.EserviceRequestId as OrganizationId,      
-----E.EserviceRequestNumber as encryptedEServiceRequestNumber,      
---E.EserviceRequestNumber as TradeLicenseNumber ,      
---      e.EserviceRequestId,E.EserviceRequestNumber,ed.RequestForUserType,EAD.ClearanceExamType      
---,eci.ExamResult,eci.DateModified,dateadd(month, -6, getdate())      
-      
---,* 
-from    ExamCandidateInfo  ECI 
-inner JOIN      
-             ExamsAnnouncementDetails EAD ON       
-             ECI.ExamsAnnouncementDetailsId =       
-             EAD.ExamsAnnouncementDetailsId 
-			 inner JOIN      
-             ExamsAnnouncements EA ON EAD.ExamsAnnouncementId =      
-              EA.ExamsAnnouncementId      
-     inner join etrade.EServiceRequests E on E.EserviceRequestId =ECI.EServiceRequestId      
-     inner join etrade.EServiceRequestsDetails ED on E.EserviceRequestId =ED.EserviceRequestId      
-     inner join Types T on t.TypeId =ed.RequestForUserType      
-     left join Types_ara T_ara on T.TypeId=T_ara.TypeId  AND      T.TypeId!=33224591--exclude general broker for service 28,31
-      --SELECT * FROM types WHERE typeid IN (33224591,33224592,33224593,33237149)--broker types
-     where       
-      
-  e.RequesterUserId=@MobileUserid  and      
-      eci.ExamResult=(select typeid from Types where Name='passed the exam' and StateId='EserviceExamResultsTypesCreatedState')      
-          
-    and eci.DateModified >= dateadd(month, -6, getdate())      
-          
-    and( e.EServiceRequestId not in (select isnull(OrganizationId,0) from etrade.EServiceRequestsDetails where RequestServicesId=@serviceid      
-    and StateId  in ('EServiceRequestDetailsProceedState','EServiceRequestDetailsCompletedState','EServicesRequestDetailsSubmittedState','EServiceRequestDetailsReSubmittedState')) )
-     -- and StateId  in ('EServiceRequestSubmittedState','EServiceRequestCreatedState')) 
-    AND (ECI.ExamCandidateInfoId=@ChildOrgId or (@ChildOrgId is null and @serviceid in (31,28)))
-	print ( @ChildOrgId)
-	  return;
-	  end
-	        
-			PRINT 'old select genrboker'
-		PRINT	 @OrganizationId   
-  PRINT @serviceid     
- PRINT @eservicerequestid       
- PRINT @lang  
- 
- select distinct   BK.BankCode,  
-    isnull(BrokOrg.FirstName+' '+BrokOrg.LastName,BrokOrg.Name) as BrokerEnglishName,    
-  bod.BrokerOrgId,         
-          
-  brokertype.Name BTEng,        
- case when @lang='ar' then  ISNULL(BrokerType.LocalDescription, BrokerType.Name) else ISNULL(BrokerType.Name, BrokerType.LocalDescription) end   AS BrokerType,        
-states.StateName,states.StateId,        
-  ISNULL(states_Ara.StateName, states.StateName) AS [Status],           
-  Brokorg.OrganizationCode as BrokerCode,        
-  BrokOrg.LocalDescription AS BrokerNameAra,        
-  bod.CivilId,        
-  -- bod.IDExpiryDate As CivilIdExpiryDate,        
-    
-    
- -- CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103) As CivilIdExpiryDate,  
-  
-  
---isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103)) As CivilIdExpiryDate,  
-  
-  
---isnull(CONVERT(VARCHAR(10),  '', 103),'') As CivilIdExpiryDate,  --qasem remove
+                                       ERS.RequestForUserType,            
+                                       -- isnull(ERS.RequestForName,EARS.RequestForName) as BrokerNameAra,            
+                                       (ERS.ArabicFirstName + ' ' + ERS.ArabicSecondName + ' ' + ERS.ArabicThirdName + ' ' + ERS.ArabicLastName) AS BrokerNameAra, --+ ' ' + ERS.ArabicLastName
+                                       (ERS.EnglishFirstName + ' ' + isnull(ers.EnglishSecondName,'') + ' ' + isnull(ers.EnglishThirdName,'') + ' ' + ERS.EnglishLastName) AS BrokerEnglishName, --+ ' ' + ERS.EnglishLastName--
+									     case 
+									   when @serviceid in(31,28) and @lang ='eng'
+									   then
+									   ISNULL(ERS.RequesterEnglishName, EARS.RequesterEnglishName)									   
+									   else 
+									   ISNULL(ERS.RequesterArabicName, EARS.RequesterArabicName)									   end
+									   AS parentname ,           
+                                       --isnull(ERS.RequestForName,EARS.RequestForName) as BrokerEnglishName            
 
-COALESCE(
-  CONVERT(VARCHAR(10), ERS.CivilIDExpiryDate, 103),
-  CONVERT(VARCHAR(10), bod.IDExpiryDate, 103),
-  ''
-) AS CivilIdExpiryDate, --qasem4
-
-  
--- isnull(isnull(CONVERT(VARCHAR(10),  ers.CivilIDExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  bod.IDExpiryDate, 103),'1900-01-01 00:00:00.000'))  As CivilIdExpiryDate,  
-   
-  
-   
-    
- -- '' as PassportNo,      qasem remove  
-  COALESCE(
-  CONVERT(VARCHAR(10), ERS.PassportNo, 103),
-  CONVERT(VARCHAR(10), bod.PassportNo, 103),
-  ''
-) AS PassportNo, --qasem4
-
-  -- case when isnull(isnull(ers.PassportNo,bod.PassportNo),'')='NULL' then '' else isnull(isnull(ers.PassportNo,bod.PassportNo),'') end as PassportNo,  
-  -- isnull(bod.PassportExpiryDate,'1900-01-01 00:00:00.000') As PassportExpirydate,        
-    
- -- bod.PassportExpiryDate as PassportExpirydate,  
---CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)  As TestPassportExpirydate,  
-    
--- isnull(CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103),'1900-01-01 00:00:00.000')  As PassportExpirydate,  
-   
-   
-    
- --isnull(CONVERT(VARCHAR(10),  '', 103),'') As PassportExpirydate,    --qasem remove
-  COALESCE(
-  CONVERT(VARCHAR(10), ERS.PassportExpiryDate, 103),
-  CONVERT(VARCHAR(10), bod.PassportExpiryDate, 103),
-  ''
-) AS PassportExpirydate, --qasem
-
-    
--- isnull(CONVERT(VARCHAR(10),  ers.PassportExpiryDate, 103),CONVERT(VARCHAR(10),  bod.PassportExpiryDate, 103)) As PassportExpirydate,  
-  
-   
-case when @lang='ar' then  ISNULL(BrokCountry.LocalDescription,BrokCountry.Name) else ISNULL(BrokCountry.Name,BrokCountry.LocalDescription) end  AS Nationality,        
-         
-         
-          
-  --Broker License Details              
-  BLD.LicenseNo As BrokerLicenseNo,        
-  BLD.DtOfIssue As LicenseIssueDate,        
-  BLD.BrokerFileNumber As BrokerFileNumber,        
- -- bld.DtOfExpiry As LicenseExpiryDate,        
-    
-  CONVERT(VARCHAR(10),  bld.DtOfExpiry, 103) As LicenseExpiryDate,  
-    
-  sbm.MainOrgId,        
- mo.OrganizationId,   
- --qasem6-12 edit parentname
- case when @lang='ar' then
- isnull(Mo.LocalDescription,BrokOrg.LocalDescription)
- else
- isnull(mo.Name,BrokOrg.Name) end As parentname,        
-          
-  --BG Details        
---  isnull(bgd.BGNo,'') BGNo,        
-    
-   case when isnull(bgd.BGNo,'')='NULL' then '' else isnull(bgd.BGNo,'') end as BGNo,  
-  
-  ISNULL(BK_ara.Name,BK.Remarks )BankName,        
-  bgd.BankId,        
- -- bgd.BGIssueDt,   
-    CONVERT(VARCHAR(10),  bgd.BGIssueDt, 103) As BGIssueDt,    
-  CONVERT(VARCHAR(10),  bgd.BGExpiryDt, 103) As BGExpiryDate,      
-   case when @lang='ar' then  ISNULL(states_Ara.StateName,states.StateName) else ISNULL(states.StateName,states_Ara.StateName) end   AS BGStatus,        
-  
---   ISNULL(states_Ara.StateName,states.StateName) BGStatus,     
- -- bgd.BGExpiryDt As BGExpiryDate,     
-    
-      
-          
-  --Trade License        
-  TL.LicenseNumber TLLicenseNo,        
-  -- TL.ExpirationDate TLExpiryDate,       
-    
-    
- -- CONVERT(VARCHAR(10),  TL.ExpirationDate, 103) As TLExpiryDate,    
-    
- -- isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),'1900-01-01 00:00:00.000'),isnull(CONVERT(VARCHAR(10),  TL.ExpirationDate, 103),'1900-01-01 00:00:00.000'))  As TLExpiryDate,  
-   
-
---rama remove  
---case when @serviceid='14' 
---then isnull(isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),CONVERT(VARCHAR(10),  TL.ExpirationDate, 103)),'30/12/1950')
---else isnull(CONVERT(VARCHAR(10),  ers.LicenseNumberExpiryDate, 103),CONVERT(VARCHAR(10),
---TL.ExpirationDate, 103)) end As TLExpiryDate,  
-       
---start rama
-CASE
-    WHEN @serviceid = '14' THEN
-        ISNULL(
-            ISNULL(
-			    CONVERT(VARCHAR(10), TL.ExpirationDate, 103), --qasem5
-                CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103)--qasem5
-            ),
-            '1950-12-30 00:00:00.000'
-        )
-    ELSE
-        ISNULL(
-		    CONVERT(VARCHAR(10), TL.ExpirationDate, 103), --qasem5
-            CONVERT(VARCHAR(10), ers.LicenseNumberExpiryDate, 103)--qasem5
-        )
-END AS TLExpiryDate,
---end rama
-
-TL.EffectiveFrom TLIssuedate,        
+                                       ISNULL(ERS.CivilID, EARS.CivilID) AS CivilID, 
+                                       ISNULL(CONVERT(VARCHAR(10), ERS.CivilIDExpiryDate, 103), CONVERT(VARCHAR(10), EARS.CivilIDExpiryDate, 103)) AS CivilIdExpiryDate, 
+                                       ISNULL(ERS.PassportNo, EARS.PassportNo) AS PassportNo, 
+                                       ISNULL(CONVERT(VARCHAR(10), ERS.PassportExpiryDate, 103), CONVERT(VARCHAR(10), EARS.PassportExpiryDate, 103)) AS PassportExpirydate, 
+                                       ISNULL(CONVERT(VARCHAR(10), ERS.LicenseNumberExpiryDate, 103), CONVERT(VARCHAR(10), EARS.LicenseNumberExpiryDate, 103)) AS TLExpiryDate, 
+                                       ISNULL(ERS.MobileNumber, EARS.MobileNumber) AS MobileNumber, 
+                                       ISNULL(ERS.email, EARS.email) AS email, 
+									   ISNULL(ERS.CommercialLicenseNo, EARS.CommercialLicenseNo) AS CommercialLicenseNo  ,--omar
+                                       ISNULL(ERS.Address, EARS.Address) AS Address,
+                                       CASE
+                                           WHEN @lang = 'ar'
+                                           THEN ISNULL(Ac.localdescription, Ac1.LocalDescription)
+                                           ELSE ISNULL(Ac.Name, Ac1.name)
+                                       END AS nationality,            
+                                       --isnull(Ac.Name,Ac1.Name) As nationality,   
 
 
-  --Contact Details        
- -- cts.MobileTelNumber as MobileNumber,     
-  isnull(ers.MobileNumber,cts.MobileTelNumber) as MobileNumber,        
-    
-       
-  cts.BusinessFaxNumber,        
-  isnull(ers.email,cts.EMail) as email,        
-  BrokAddress.Address,        
-  CDO.OrganizationTypeId,        
-          
-  ---company details for spcl broker and spcl messenger        
-          
-  cdo.name companyname,        
-  cdo.TradeLicenseNumber,        
-          
-  cdo.LocalDescription,        
-  cdt.Name ConmpanyType     ,   
-  isnull(BrokOrg.CommercialLicenseNo ,TL.LicenseNumber) as CommercialLicenseNo,  
-        
-      'BrokerDetails' as "TableName"   
-    --  select top 20 * from Banks  
-                
-FROM Organizations BrokOrg              
-Left JOIN BrokerOrgDetails BOD     
-  
-  
-ON BOD.BrokerOrgId=BrokOrg.OrganizationId        
---Left join BrokBGDetails BGD on  BrokOrg.OrganizationId  =BGD.BrokerOrgId    
-Outer apply (select top 1 *  from BrokBGDetails BGD where  BrokOrg.OrganizationId  =BGD.BrokerOrgId order by datecreated DESc) BGD          
-LEFT JOIN SubOrg SBM ON BOD.BrokerOrgId=SBM.ChildOrgId        
-left join Organizations SO on SBM.ChildOrgId=SO.OrganizationId        
-left join Organizations MO on sbm.MainOrgId=mo.OrganizationId        
-Left join Banks BK on BGD.BankId=BK.OrganizationId        
-Left join Organizations_ara BK_ara on BK.OrganizationId =BK_ara.OrganizationId        
-    
-Left Join TradeLicenses TL on  BrokOrg.OrganizationId =TL.OrganizationId           
-Left JOIN [Types] [BrokerType] ON BOD.BrokerTypeId=[BrokerType].TypeId               
-LEFT JOIN BrokLicenseDetails BLD ON BrokOrg.OrganizationId=BLD.BrokerOrgId               
-LEFT JOIN BrokContractDetails BCD ON BOD.BrokerOrgId=BCD.BrokerOrgId              
-LEFT JOIN Addresses BrokAddress ON BrokOrg.OrganizationId=BrokAddress.ParentId        
-left join Contacts cts on BrokAddress.ParentId=cts.ParentId               
-LEFT JOIN Locations BrokCountry ON BrokAddress.Country=BrokCountry.LocationId               
-left join users on users.OrganizationId=BOD.BrokerOrgId             
-left join DataProfileClassWorkflowStates states on BrokOrg.StateId =states.StateId   --and  states.StateId in ('OrganizationsCreatedState','OrganizationsModifyState','OrganizationsActivatedState')        
-       
-LEFT JOIN DataProfileClassWorkFlowStates_Ara states_Ara ON states.StateId=states_Ara.StateId        
-left join BrokerImporter BKI on BOD.BrokerOrgId=BKI.BrokerOrgId        
--- and  BKI.StateId NOT in ('BrokerImporterDeletedState')---- condittion on         
-left join Organizations CDO on BKI.CompanyId=CDO.OrganizationId        
-left join Types CDT on CDO.OrganizationTypeId=CDT.TypeId     
-left join etrade.EServiceRequestsDetails ERS on ers.OrganizationId=@OrganizationId      
- --    left join etrade.EServiceRequests E on E.EserviceRequestId=ers.EserviceRequestId    and E.StateId not in ('EServiceRequestFinalRejectedState')      
-WHERE 1 =1          
-        
-                                          -- 10/12/2019  
-and bod.BrokerOrgId=@OrganizationId   AND ERS.StateId NOT IN ('EServicesRequestDetailsDeletedState')    
-  --    and e.ServiceId=@serviceid  
-   and (( ISNULL(@serviceid,'')<>'' and ERS.RequestServicesId = @serviceid ) or ( ISNULL(@serviceid,'')='' and 1=1 ))    
-     
-   
-          and (( ISNULL(@eservicerequestid,'')<>'' and ERS.EserviceRequestId = @eservicerequestid ) or ( ISNULL(@eservicerequestid,'')='' and 1=1 ))   
-            
-            
-             
-  
-            
-SET NOCOUNT OFF;                   
-                   
-                 
-END         
-        
-  
+									     ers.CommercialLicenseNo, --omar
+                                  
+									    BG.BGNo as BGNo,  --omar
+								  	  case @lang when 'eng' then O.Name else O.LocalDescription end  BankName,    --omar     
+								  BG.BankId BankId,       --omar  
+								 -- bgd.BGIssueDt,   
+									--BG.BGIssueDt As BGIssueDt,  --omar   
+								--  BG.BGExpiryDt As BGExpiryDate,  --omar    
+								 CONVERT(VARCHAR(10), BG.BGIssueDt, 103) As BGIssueDt, --qasem3
+									CONVERT(VARCHAR(10), BG.BGExpiryDt, 103) As BGExpiryDate, --qasem3
+								  BG.StateId   AS BGStatus,  --omar  
+								         
+                                       'BrokerDetails' AS "TableName", 
+                                       *
+                                FROM etrade.EServiceRequestsDetails ERS
+                                     LEFT JOIN types BrokerType ON ERS.RequestForUserType = BrokerType.TypeId
+                                     LEFT JOIN AllCountries Ac ON ers.Nationality = Ac.LocationId
+                                     LEFT JOIN etrade.EServiceRequestsDetails EARS ON ERS.OrganizationId = EARS.EserviceRequestId
+                                     LEFT JOIN AllCountries Ac1 ON EARS.Nationality = Ac1.LocationId
+									  left join DRPeople DR on DR.PersonalId = ERS.MCPersonalId --omar
+									 left join BrokBGDetails BG on DR.DRPeopleId = BG.BrokerOrgId --omar
+									 left join Organizations O on BG.BankId = O.OrganizationId --omar
+                                WHERE ERS.EserviceRequestId = @eservicerequestid;
+                        END;
+                END;            
+                                --added -siraj            
+
+        END;
+		PRINT '@eservicerequestid'
+		PRINT @eservicerequestid
+		PRINT @serviceid
+		PRINT @MobileUserid
+		PRINT 'EServiceRequests details'
+		--SELECT * FROM [etrade].[EServiceRequests] WHERE --ED.organizationid = @orgid  
+  --      EserviceRequestId = 54407
+        SELECT *, 
+               CONVERT(VARCHAR, CivilIDExpiryDate, 103) AS 'CivilIDExpiryDateFormatted', 
+               CONVERT(VARCHAR, PassportExpiryDate, 103) AS 'PassportExpiryDateFormatted', 
+			    isnull(ED.EnglishFirstName,'')+isnull(ED.EnglishSecondName,' ')+isnull(ED.EnglishThirdName,' ')+isnull(ED.EnglishLastName,' ') as BrokerNameEng,
+				 isnull(ED.ArabicFirstName,'')+isnull(ED.Arabicsecondname,' ')+isnull(ED.arabicthirdname,' ')+isnull(ED.arabiclastname,' ') AS BrokerNameAra, 
+               'EServiceRequests' AS "TableName"
+        FROM [etrade].[EServiceRequests] E
+             INNER JOIN [etrade].[EServiceRequestsdetails] ED ON e.EServiceRequestId = ed.eservicerequestid            
+        --WHERE organizationid = @orgid AND e.serviceid = @serviceid;            
+        WHERE --ED.organizationid = @orgid  
+        e.EserviceRequestId = @eservicerequestid
+        AND e.serviceid = @serviceid
+        AND ed.RequesterUserId = @MobileUserid
+        AND e.StateId NOT IN('EServiceRequestCompletedState', 'EServiceRequestFinalRejectedState', 'EServiceRequestDeletedState');    
+        -- and StateId not in ('EServiceRequestDeletedState')  
+        --WHERE e.EserviceRequestId= @eservicerequestid   AND e.serviceid = @serviceid;            
+    END;
+        IF(@ReferenceProfile IS NOT NULL
+           AND @ReferenceProfile <> ''
+           AND @eservicerequestid IS NOT NULL)
+            BEGIN
+                PRINT '[usp_GetUploadedDocumentsInfoForeservices]';
+                EXEC [etrade].[getreqdocsddldataforeservices] 
+                     @CounterValueStart, 
+                     @lang, 
+                     @ReferenceProfile;
+                EXEC [etrade].[usp_GetUploadedDocumentsInfoForeservices] 
+                     @lang, 
+                     'documentid', 
+                     'ScanRequestUploadDocs', 
+                     '', 
+                     @eservicerequestid, 
+                     '', 
+                     @ReferenceProfile;
+
+                --exec etrade.GETUserAssociatedOrganizationsDetailsForBrs @mobileUserId;            
+
+        END;
+
+        --WHERE organizationid = 6 AND e.serviceid = 7;            
