@@ -1,115 +1,107 @@
-INSERT INTO [dbo].[Types]
-           ([TypeId]
-           ,[TypeTypeId]
-           ,[Name]
-           ,[Description]
-           ,[DataProfileClassId]
-           ,[ParentId]
-           ,[Code]
-           ,[DateCreated]
-           ,[CreatedBy]
-           ,[DateModified]
-           ,[ModifiedBy]
-           ,[StateId]
-           ,[OwnerOrgId]
-           ,[OwnerLocId]
-           ,[LocalDescription]
-           ,[IsMandatory])
-     VALUES
-           ((select max(typeid)+1 from types)
-           ,332294388
-           ,N'Username Request (Form No.1)'
-           ,N'Username Request (Form No.1)'
-           ,null
-           ,null
-           ,null
-           ,GetDate()
-           ,'Microclear'
-           ,null
-           ,null
-           ,'BrsEserviceDocumentsTypesCreatedState'
-           ,29588
-           ,8998
-           ,N'نموذج طلب اسم مستخدم (نموذج رقم 1)'
-           ,1
-		   )
+USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[SubmitUserDeliveryDetails]    Script Date: 1/22/2024 5:48:22 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
+ 
+ALTER proc [etrade].[SubmitUserDeliveryDetails]  
+@EserviceRequestId bigint,
+@EserviceRequestState VARCHAR(100) as Declare @MCPersonalId BIGINT = 0,@MCUserId VARCHAR(50) = '' Declare @Password varchar(100) = NULL,  @EmailId VARCHAR(50),@EServiceRequestNumber VARCHAR(50) = '' DECLARE @SId  VARCHAR(100) ,@sWhere VARCHAR(1000) 
+DECLARE  @RequestNumber VARCHAR(100)
 
-   INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           ((select max(typeid)+1 from types)
-           ,N'نموذج طلب اسم مستخدم (نموذج رقم 1)'
-           ,N'نموذج طلب اسم مستخدم (نموذج رقم 1)'
-           ,'Microclear')
+SELECT @MCPersonalId=MCPersonalId,@MCUserId=UserId,@EmailId=EMail  
+FROM  [etrade].[EServiceRequestsDetails] 
+WHere [EserviceRequestId] = @EserviceRequestId 
 
+Select @RequestNumber =EServiceRequestNumber
+FROM  [etrade].[EServiceRequests] 
+WHere [EserviceRequestId] = @EserviceRequestId 
+IF(@EserviceRequestState = 'Delivered') 
 
+BEGIN 
+/*******************-On Delivered action-*******************/ 
+SELECT @EServiceRequestNumber = EServiceRequestNumber
+FROM eTrade.EServiceRequests 
+WHERE EServiceRequestId = @EServiceRequestId 
 
-INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295793
-           ,N'نموذج طلب اسم مستخدم (نموذج رقم 1)'
-           ,N'نموذج طلب اسم مستخدم (نموذج رقم 1)'
-           ,'Microclear')
+Select @Password=[Password] from Users where PersonalId=@MCPersonalId 
 
-		   INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295792
-           ,N'السجل التجاري للشركة'
-           ,N'السجل التجاري للشركة'
-           ,'Microclear')
-		      INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295791
-           ,N'هوية العمل'
-           ,N'هوية العمل'
-           ,'Microclear')
+INSERT INTO [KGACEmailOutSyncQueue] 
 
-		      INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295790
-           ,N'البطاقة المدنية'
-           ,N'البطاقة المدنية'
-           ,'Microclear')
+( [Sync],[MsgType],[UserId],[Pass],[TOEmailAddress],[CCEmailAddress],[BCCEmailAddress], 
+[Consignee],[SampleRequestNo],[DeclNo],[DateCreated],[DateModified], [Status],[msgtypeName],[ConsigneeId],[MailPriority],[TempDeclNumber]) 
+VALUES
+( 0,'EMAILForESNewUserReqWithPassword',@MCUserId,@Password,@EmailId,'','', @MCPersonalId,'',@EServiceRequestNumber,GETDATE(),GETDATE(), 'Created',NULL, @MCPersonalId,'Normal',@EServiceRequestNumber ) 
 
-		        INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295794
-           ,N'نموذج إقرار وتعهد للشركة (نموذج رقم 2)'
-           ,N'نموذج إقرار وتعهد للشركة (نموذج رقم 2)'
-           ,'Microclear')
-		   
-		         INSERT INTO [dbo].[Types_ara]
-           ([TypeId]
-           ,[Name]
-           ,[Description]
-           ,[CreatedBy])
-     VALUES
-           (332295795
-           ,N'نموذج إقرار وتعهد للموظف (نموذج رقم 3)'
-           ,N'نموذج إقرار وتعهد للموظف (نموذج رقم 3)'
-           ,'Microclear')
+UPDATE People SET [StateId]  = 'AwaitingPswdAcknowledgement', [DateModified] = GETDATE(), [ModifiedBy] = 'eservice' Where PersonalId = @MCPersonalId SET  @SId=NEWID() SET  @sWhere='WHERE PersonalId = ''' + CONVERT(VARCHAR, @MCPersonalId) + ''''; EXEC usp_LogInAuditEx @sProfileName='People', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID= @SId UPDATE [dbo].[Users] SET [StateId]  = 'AwaitingPswdAcknowledgement', [DateModified] = GETDATE(), [ModifiedBy] = 'eservice' Where PersonalId = @MCPersonalId SET  @sWhere='Where PersonalId = ''' + CONVERT(VARCHAR(50), @MCPersonalId)+ ''''; EXEC usp_LogInAuditEx @sProfileName='Users', @sWhere= @sWhere, @CurrUserId='eservice', @ClientIP = '127.0.0.1', @AppSessionID = @SId END ELSE BEGIN 
+
+/*******************-On Completion action-*******************/ 
+UPDATE [dbo].[People] SET StateId='PeopleActivatedState', ModifiedBy='eservice', DateModified=GETDATE() WHERE PersonalId=@MCPersonalId SET  @SId=NEWID() SET  @sWhere='WHERE PersonalId = ''' + CONVERT(VARCHAR, @MCPersonalId) + ''''; 
+
+EXEC usp_LogInAuditEx 
+@sProfileName='People', 
+@sWhere= @sWhere, 
+@CurrUserId='eservice', 
+@ClientIP = '127.0.0.1', 
+@AppSessionID= @SId 
+UPDATE [dbo].[Users] SET StateId='UsersActivatedState', AccountStatus='y', ModifiedBy='eservice', DateModified=GETDATE() WHERE PersonalId=@MCPersonalId SET  @sWhere='Where PersonalId = ''' + CONVERT(VARCHAR(50), @MCPersonalId)+ ''''; 
+
+EXEC usp_LogInAuditEx 
+@sProfileName='Users', 
+@sWhere= @sWhere, 
+@CurrUserId='eservice',
+@ClientIP = '127.0.0.1', 
+@AppSessionID = @SId 
+
+   UPDATE [dbo].[OrgUserActivities]         
+   SET StateId='OrgUserActivitiesActiveState',      
+       ModifiedBy='eservice',        
+       DateModified=GETDATE()        
+   WHERE PersonalId=@MCPersonalId  --@MCPersonalId was already declared in existing code
+
+   SET @sWhere='Where PersonalId ='+ CONVERT(VARCHAR(50), @MCPersonalId);  
+  EXEC usp_LogInAuditEx 
+			@sProfileName='OrgUserActivities',
+			@sWhere= @sWhere,
+			@CurrUserId='eservice',
+			@ClientIP = '127.0.0.1',
+			@AppSessionID = @SId
+
+			                  
+ INSERT INTO [etrade].[$EServiceRequests]         
+   ([$AuditTrailId], [$UserId], [$Operation], [$DateTime], [$DataProfileClassId], [$IPId],                      
+    [$SessionId], [EServiceRequestId], [EServiceRequestNumber], [RequestSubmissionDateTime],         
+    [RequestCompletionDateTime], [StateId],[DateCreated], [CreatedBy], [ModifiedBy],         
+    [DateModified], [OwnerOrgId], [OwnerLocId], [ServiceId], [RequesterUserId],                       
+    [RequesterUserType], [DeliveredDate], [DeliveredBy], [ApprovedDate], [ApprovedBy], [KNetReceiptNo])          
+  SELECT NEWID(), 'eService', 1, GETDATE(), 'EServiceRequests', '127.0.0.1', 'system',         
+   [EServiceRequestId],[EServiceRequestNumber], [RequestSubmissionDateTime], [RequestCompletionDateTime],         
+   [StateId], GETDATE(), 'eService','eService', GETDATE(), [OwnerOrgId], [OwnerLocId], [ServiceId], [RequesterUserId],         
+   [RequesterUserType], [DeliveredDate],[DeliveredBy], [ApprovedDate], [ApprovedBy], [KNetReceiptNo]         
+   FROM [etrade].[EServiceRequests]        
+  WHERE EServiceRequestId = @EServiceRequestId                      
+                      
+ INSERT INTO [etrade].[$EServiceRequestsDetails] ([$AuditTrailId], [$UserId], [$Operation], [$DateTime], [$DataProfileClassId], [$IPId],              
+   [$SessionId], [EserviceRequestDetailsId], [EserviceRequestId], [RequestForUserType], [RequestServicesId], [OrganizationId], [RequesterLicenseNumber],             
+   [RequesterArabicName], [RequesterEnglishName], [ArabicFirstName], [ArabicSecondName], [ArabicThirdName], [ArabicLastName],             
+   [EnglishFirstName], [EnglishSecondName], [EnglishThirdName], [EnglishLastName], [Nationality], [CivilID], [CivilIDExpiryDate], [MobileNumber],             
+   [PassportNo], [PassportExpiryDate], [Address], [Email], [LicenseNumber], [LicenseNumberExpiryDate], [Remarks], [RejectionRemarks],             
+   [RequestForVisit], [RequestForVisitRemarks], [ExamAddmissionId], [ExamDetailsId], [status], [StateId], [DateCreated], [CreatedBy],             
+   [ModifiedBy], [DateModified], [OwnerOrgId], [OwnerLocId], [RequesterUserId], [RequestForName], [RequestForEmail],               
+   [Gender],[RequestForUserId], [BrokFileNo], [AssociatedOrgIds], UserId,              
+   IsDelivered,UserDetailsReceivedby,RecipientsMobileNo,RecipientCivilId,CustomsUserResetPassword)                      
+  SELECT NEWID(), 'eService', 1, GETDATE(), 'EServiceRequestsDetails', '127.0.0.1','system',         
+   [EserviceRequestDetailsId], [EserviceRequestId], [RequestForUserType], [RequestServicesId], [OrganizationId], [RequesterLicenseNumber],             
+   [RequesterArabicName], [RequesterEnglishName], [ArabicFirstName], [ArabicSecondName], [ArabicThirdName], [ArabicLastName],             
+   [EnglishFirstName], [EnglishSecondName], [EnglishThirdName], [EnglishLastName], [Nationality], [CivilID], [CivilIDExpiryDate], [MobileNumber],             
+   [PassportNo], [PassportExpiryDate], [Address], [Email], [LicenseNumber], [LicenseNumberExpiryDate], [Remarks], [RejectionRemarks],             
+   [RequestForVisit], [RequestForVisitRemarks], [ExamAddmissionId], [ExamDetailsId], [status], [StateId], [DateCreated], [CreatedBy],             
+   [ModifiedBy], [DateModified], [OwnerOrgId], [OwnerLocId], [RequesterUserId], [RequestForName], [RequestForEmail],             
+   [Gender], [RequestForUserId], [BrokFileNo], [AssociatedOrgIds], UserId,             
+   IsDelivered,UserDetailsReceivedby,RecipientsMobileNo,RecipientCivilId,CustomsUserResetPassword             
+   FROM [etrade].[EServiceRequestsDetails]         
+   WHERE EServiceRequestId = @EServiceRequestId    
+END
