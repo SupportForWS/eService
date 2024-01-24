@@ -1,7 +1,7 @@
 USE [MicroclearLight_July23]
 GO
 
-/****** Object:  View [etrade].[OrganizationCustomsBusinessActivities_BPN]    Script Date: 1/24/2024 5:15:40 PM ******/
+/****** Object:  View [etrade].[OrganizationCustomsBusinessActivities_BPN]    Script Date: 1/24/2024 9:39:08 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -19,18 +19,20 @@ CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN Cast(1 as BIGINT
 	WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN Cast(3 as BIGINT) 
 	WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN Cast(4 as BIGINT) 
 END AS StatusId, 
-
 BAS.ValueEnglish as StatusEnglishName,
 BAS.ValueArabic as StatusArabicName,
 ESR.OperatorCode AS OperatorCode, ESR.AirCustomsDepartment AS AirCustomsDepartment, ESR.SeaCustomsDepartment AS SeaCustomsDepartment, ESR.LandCustomsDepartment AS LandCustomsDepartment, 
 oa.CreatedBy AS CreatedById, oa.DateCreated AS CreatedAt, NULL AS LastModifiedById, NULL AS LastModifiedAt, NULL AS DeactivatedById, NULL AS DeactivatedAt,
 CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN 1 ELSE 0 END AS IsActive,
 BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic
-
+BA.NameArabic as ActivityNameArabic,
+case when oa.activityid =OUA.activityid then '1'
+else 2
+end as Avialability
 From OrganizationActivities oa
-LEFT join eTrade.eServiceRequestsDetails ESR ON oa.eServiceRequestId = ESR.EServiceRequestId 
-left join OrgUserActivities OUA on OUA.OrganizationId =oa.OrganizationId 
+
+LEFT join eTrade.eServiceRequestsDetails ESR ON oa.eServiceRequestId = ESR.EServiceRequestId  
+left join dbo.OrgUserActivities OUA on OUA.ActivityId =oa.ActivityId and oua.PersonalId=esr.MCPersonalId
 left join  etrade.CustomsBusinessActivities_BPN BA on BA.Id =oa.ActivityId
 left join etrade.CustomsBusinessActivityStatuses BAS on BAS.Id = CASE
         WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN CAST(1 AS BIGINT)
