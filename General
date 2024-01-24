@@ -1,1 +1,4 @@
-DeActivateRelatedImportLicensesRequest
+select * from etrade.EServiceRequestsCustomsActivities
+select * from etrade.EServiceRequestsPorts
+select * from dbo.OrgUserActivities
+select * from dbo.UserPorts
