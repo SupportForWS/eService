@@ -1,13 +1,23 @@
- var z = await _IeServicesUnitOfWork.CustomsSystemUserActivityRepository.Get()
-.Where(p => p.CustomsSystemUserId == customsSystemUser.Id)
-.GroupBy(p => p.CustomsBusinessActivityId)
-.Select(p => p.OrderByDescending(g => g.DateCreated).First())
-.Select(a => new CustomsBusinessActivities
-{
-    CustomsBusinessActivityId = a.CustomsBusinessActivityId,
-    Status = _Language == LanguageEnum.English ? a.StatusEnglishName : a.StatusArabicName,
-    ActivityName = _Language == LanguageEnum.English ? a.ActivityNameEnglish : a.ActivityNameArabic,
-    Availability = a.Availability.Contains("Deleted") ? _Localizer[Resources.ResourcesEnum.SomethingWentWrong] : _Localizer[Resources.ResourcesEnum.Number],
-    DateCreated = a.DateCreated
-})
-.ToListAsync();
+
+Create PROCEDURE [dbo].[USP_UserBusinessACtivityHistory]
+(
+@MCPersonalId bigint,
+@ActivityId int
+)AS 
+BEGIN
+SELECT 
+	CASE When A.StateId='OrgUserActivitiesDeletedState' then 'Removed' else 'Added' END as Action ,
+		e.EServiceRequestNumber as RequestNo,
+		A.ADate as ActionDate
+FROM 
+    (SELECT TOP 1 StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId 
+	 FROM [$Orguseractivities] 
+	 WHERE PersonalId=@MCPersonalId AND ActivityId=@ActivityId AND StateId='OrgUserActivitiesCreatedState'
+   UNION ALL
+     SELECT StateId , ActivityId ,DateModified AS ADate,eServiceRequestId 
+	  FROM Orguseractivities 
+	  WHERE PersonalId=@MCPersonalId AND ActivityId=@ActivityId 
+    )A 
+JOIN [etrade].[EServiceRequests] e ON e.EServiceRequestId=a.eServiceRequestId
+ORDER BY ActionDate 
+END
