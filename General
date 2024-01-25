@@ -1,47 +1,13 @@
-USE [MicroclearLight_July23]
-GO
-
-/****** Object:  View [etrade].[OrganizationCustomsBusinessActivities_BPN]    Script Date: 1/24/2024 9:39:08 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
-
-
-ALTER view [etrade].[OrganizationCustomsBusinessActivities_BPN]
-AS
-Select oa.OrganizationActivityId AS Id, oa.OrganizationId AS OrganizationId, oa.ActivityId AS CustomsBusinessActivityId,
-CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN Cast(1 as BIGINT)
-	WHEN oa.StateId = 'OrganizationActivitiesDeActivatedState' THEN Cast(2 as BIGINT) 
-	WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN Cast(3 as BIGINT) 
-	WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN Cast(4 as BIGINT) 
-END AS StatusId, 
-BAS.ValueEnglish as StatusEnglishName,
-BAS.ValueArabic as StatusArabicName,
-ESR.OperatorCode AS OperatorCode, ESR.AirCustomsDepartment AS AirCustomsDepartment, ESR.SeaCustomsDepartment AS SeaCustomsDepartment, ESR.LandCustomsDepartment AS LandCustomsDepartment, 
-oa.CreatedBy AS CreatedById, oa.DateCreated AS CreatedAt, NULL AS LastModifiedById, NULL AS LastModifiedAt, NULL AS DeactivatedById, NULL AS DeactivatedAt,
-CASE WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN 1 ELSE 0 END AS IsActive,
-BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic,
-case when oa.activityid =OUA.activityid then '1'
-else 2
-end as Avialability
-From OrganizationActivities oa
-
-LEFT join eTrade.eServiceRequestsDetails ESR ON oa.eServiceRequestId = ESR.EServiceRequestId  
-left join dbo.OrgUserActivities OUA on OUA.ActivityId =oa.ActivityId and oua.PersonalId=esr.MCPersonalId
-left join  etrade.CustomsBusinessActivities_BPN BA on BA.Id =oa.ActivityId
-left join etrade.CustomsBusinessActivityStatuses BAS on BAS.Id = CASE
-        WHEN oa.StateId = 'OrganizationActivitiesActiveState' THEN CAST(1 AS BIGINT)
-        WHEN oa.StateId = 'OrganizationActivitiesDeActivatedState' THEN CAST(2 AS BIGINT)
-        WHEN oa.StateId = 'OrganizationActivitiesExpiredState' THEN CAST(3 AS BIGINT)
-        WHEN oa.StateId = 'OrganizationActivitiesInitAppState' THEN CAST(4 AS BIGINT)
-       
-
-    END;
-
-GO
-
+ var z = await _IeServicesUnitOfWork.CustomsSystemUserActivityRepository.Get()
+.Where(p => p.CustomsSystemUserId == customsSystemUser.Id)
+.GroupBy(p => p.CustomsBusinessActivityId)
+.Select(p => p.OrderByDescending(g => g.DateCreated).First())
+.Select(a => new CustomsBusinessActivities
+{
+    CustomsBusinessActivityId = a.CustomsBusinessActivityId,
+    Status = _Language == LanguageEnum.English ? a.StatusEnglishName : a.StatusArabicName,
+    ActivityName = _Language == LanguageEnum.English ? a.ActivityNameEnglish : a.ActivityNameArabic,
+    Availability = a.Availability.Contains("Deleted") ? _Localizer[Resources.ResourcesEnum.SomethingWentWrong] : _Localizer[Resources.ResourcesEnum.Number],
+    DateCreated = a.DateCreated
+})
+.ToListAsync();
