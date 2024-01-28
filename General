@@ -1,8 +1,12 @@
-
-            var users = await _ieServicesUnitOfWork.CustomsSystemUserRepository.Get()
-                .Where(a=>a.OrganizationId == OrganizationId)
-                .Select(a=>a.MCPersonalId)
-                .ToListAsync();
-
-            var activites = await _ieServicesUnitOfWork.CustomsSystemUserActivityRepository.Get()
-                .Where(a=> users.Contains(a.CustomsSystemUserId)()
+ var mcActivites = await _ieServicesUnitOfWork.ServiceRequestsDetailRepository.Get()
+    .Where(a => a.RequesterUserId == userId &&
+              a.RequestServicesId == (int)ServiceTypesEnum.RegisterCustomsBusinessActivity &&
+              a.IsMcCreated == true &&
+              a.CustomsBusinessActivityId != (int)CustomsBusinessActivityEnum.DirectReleaseOrganization)
+    .Select(a => a.CustomsBusinessActivityId).ToListAsync();
+ if(mcActivites != null )
+ {
+     var registeredActivites = await _ieServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository.Get()
+   .Where(a => a.OrganizationId == OrganizationId && a.StatusId != (int)CustomsBusinessActivityStatusEnum.InitialApproved)
+   .Select(a => a.CustomsBusinessActivityId)
+   .ToListAsync();
