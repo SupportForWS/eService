@@ -1,23 +1,9 @@
+  if (existingBAInMc.Tables[0] != null && existingBAInMc.Tables[0].Rows.Count > 0)
+  {
+      var mcActivites = existingBAInMc.Tables[0].AsEnumerable().Select(a => new 
+      {
+          ActivityId =Int32.Parse( a["ActivityId"].ToString())
+      });
+      if (mcActivites.Count>0)
 
-Create PROCEDURE [dbo].[USP_UserBusinessACtivityHistory]
-(
-@MCPersonalId bigint,
-@ActivityId int
-)AS 
-BEGIN
-SELECT 
-	CASE When A.StateId='OrgUserActivitiesDeletedState' then 'Removed' else 'Added' END as Action ,
-		e.EServiceRequestNumber as RequestNo,
-		A.ADate as ActionDate
-FROM 
-    (SELECT TOP 1 StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId 
-	 FROM [$Orguseractivities] 
-	 WHERE PersonalId=@MCPersonalId AND ActivityId=@ActivityId AND StateId='OrgUserActivitiesCreatedState'
-   UNION ALL
-     SELECT StateId , ActivityId ,DateModified AS ADate,eServiceRequestId 
-	  FROM Orguseractivities 
-	  WHERE PersonalId=@MCPersonalId AND ActivityId=@ActivityId 
-    )A 
-JOIN [etrade].[EServiceRequests] e ON e.EServiceRequestId=a.eServiceRequestId
-ORDER BY ActionDate 
-END
+  }
