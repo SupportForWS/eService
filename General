@@ -1,23 +1,8 @@
- var existingBAInMc = await domainServices.CheckRegisteredActivitesInMc(_UserOrganizationId);
- string orgActBGDetailActivatedState = OrganizationBankGuaranteeStatusEnum.Active.GetEnumDescription();
- var BankGuarantees =  _IeServicesUnitOfWork.OrganizationBGDetailsRepository.Get()
-    .Where(a => a.OrganizationId == _UserOrganizationId && a.StateId== orgActBGDetailActivatedState);
 
- var registeredActivities = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository
-          .Get(a => a.OrganizationId == _UserOrganizationId)
-          .Include(p => p.CustomsBusinessActivity)
-          .Select(a => new GetRegisteredCustomsBusinessActivityDTO
-          {
-              Id = CommonFunctions.CsUploadEncrypt(a.CustomsBusinessActivityId.ToString()),
-              Code = a.CustomsBusinessActivity.Code,
-              Name = _Language == LanguageEnum.English ? a.CustomsBusinessActivity.NameEnglish : a.CustomsBusinessActivity.NameArabic,
-              Status = _Language == LanguageEnum.English ? a.CustomsBusinessActivityStatus.ValueEnglish : a.CustomsBusinessActivityStatus.ValueArabic,
-              Date = a.CreatedAt,
-              CanUploadFiles = a.CustomsBusinessActivityId != (int)CustomsBusinessActivityEnum.ImportExport
-                                && currentActivitiesIds.Contains(a.CustomsBusinessActivityId),
-              BGNo = BankGuarantees.Where(b =>  b.OrganizationCustomsBusinessActivityId == a.Id).FirstOrDefault() != null 
-              ? BankGuarantees.Where(b => b.OrganizationCustomsBusinessActivityId == a.Id).FirstOrDefault().BGNo : ""
-          })
-          .ToListAsync();
+            var users = await _ieServicesUnitOfWork.CustomsSystemUserRepository.Get()
+                .Where(a=>a.OrganizationId == OrganizationId)
+                .Select(a=>a.MCPersonalId)
+                .ToListAsync();
 
- registeredActivities.ForEach(a=> existingBAInMc.Contains(
+            var activites = await _ieServicesUnitOfWork.CustomsSystemUserActivityRepository.Get()
+                .Where(a=> users.Contains(a.CustomsSystemUserId)()
