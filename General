@@ -1,13 +1,23 @@
-     if (existingBAInMc.Tables[0] != null && existingBAInMc.Tables[0].Rows.Count > 0)
-     {
-         var mcActivites = existingBAInMc.Tables[0]?.AsEnumerable().Select(a => new 
-         {
-             ActivityId = Int32.Parse(a["ActivityId"].ToString())
-         });
-         var eserviceBA = orgCustomsBusinessActivityList.Select(a=> a.CustomsBusinessActivityId).ToList();
-         if (mcActivites?.Any() ?? false)
-         {
+ var existingBAInMc = await domainServices.CheckRegisteredActivitesInMc(_UserOrganizationId);
+ string orgActBGDetailActivatedState = OrganizationBankGuaranteeStatusEnum.Active.GetEnumDescription();
+ var BankGuarantees =  _IeServicesUnitOfWork.OrganizationBGDetailsRepository.Get()
+    .Where(a => a.OrganizationId == _UserOrganizationId && a.StateId== orgActBGDetailActivatedState);
 
-         }
+ var registeredActivities = await _IeServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository
+          .Get(a => a.OrganizationId == _UserOrganizationId)
+          .Include(p => p.CustomsBusinessActivity)
+          .Select(a => new GetRegisteredCustomsBusinessActivityDTO
+          {
+              Id = CommonFunctions.CsUploadEncrypt(a.CustomsBusinessActivityId.ToString()),
+              Code = a.CustomsBusinessActivity.Code,
+              Name = _Language == LanguageEnum.English ? a.CustomsBusinessActivity.NameEnglish : a.CustomsBusinessActivity.NameArabic,
+              Status = _Language == LanguageEnum.English ? a.CustomsBusinessActivityStatus.ValueEnglish : a.CustomsBusinessActivityStatus.ValueArabic,
+              Date = a.CreatedAt,
+              CanUploadFiles = a.CustomsBusinessActivityId != (int)CustomsBusinessActivityEnum.ImportExport
+                                && currentActivitiesIds.Contains(a.CustomsBusinessActivityId),
+              BGNo = BankGuarantees.Where(b =>  b.OrganizationCustomsBusinessActivityId == a.Id).FirstOrDefault() != null 
+              ? BankGuarantees.Where(b => b.OrganizationCustomsBusinessActivityId == a.Id).FirstOrDefault().BGNo : ""
+          })
+          .ToListAsync();
 
-     }
+ registeredActivities.ForEach(a=> existingBAInMc.Contains(
