@@ -1,12 +1,25 @@
- var mcActivites = await _ieServicesUnitOfWork.ServiceRequestsDetailRepository.Get()
-    .Where(a => a.RequesterUserId == userId &&
-              a.RequestServicesId == (int)ServiceTypesEnum.RegisterCustomsBusinessActivity &&
-              a.IsMcCreated == true &&
-              a.CustomsBusinessActivityId != (int)CustomsBusinessActivityEnum.DirectReleaseOrganization)
-    .Select(a => a.CustomsBusinessActivityId).ToListAsync();
- if(mcActivites != null )
- {
-     var registeredActivites = await _ieServicesUnitOfWork.OrganizationCustomsBusinessActivityRepository.Get()
-   .Where(a => a.OrganizationId == OrganizationId && a.StatusId != (int)CustomsBusinessActivityStatusEnum.InitialApproved)
-   .Select(a => a.CustomsBusinessActivityId)
-   .ToListAsync();
+ALTER TABLE etrade.eServiceRequestsDetails
+add  IsMcCreated BIT DEFAULT 1;
+
+ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
+
+AS
+
+Select distinct Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.OrganizationId
+,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,BAS.ValueEnglish as StatusEnglishName ,BAS.ValueArabic as StatusArabicName,
+BA.NameEnglish as ActivityNameEnglish,
+BA.NameArabic as ActivityNameArabic,
+oa.DateCreated,
+case when oa.stateid ='OrgUserActivitiesDeletedState' then 'Deleted' --removed
+else 'Associated'
+end as Availability
+
+From OrgUserActivities oa
+left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
+left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
+left join etrade.CustomsBusinessActivities_BPN BA on BA.Id =ob.CustomsBusinessActivityId
+
+ 
+
+
+
