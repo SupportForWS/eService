@@ -1,9 +1,13 @@
-  if (existingBAInMc.Tables[0] != null && existingBAInMc.Tables[0].Rows.Count > 0)
-  {
-      var mcActivites = existingBAInMc.Tables[0].AsEnumerable().Select(a => new 
-      {
-          ActivityId =Int32.Parse( a["ActivityId"].ToString())
-      });
-      if (mcActivites.Count>0)
+     if (existingBAInMc.Tables[0] != null && existingBAInMc.Tables[0].Rows.Count > 0)
+     {
+         var mcActivites = existingBAInMc.Tables[0]?.AsEnumerable().Select(a => new 
+         {
+             ActivityId = Int32.Parse(a["ActivityId"].ToString())
+         });
+         var eserviceBA = orgCustomsBusinessActivityList.Select(a=> a.CustomsBusinessActivityId).ToList();
+         if (mcActivites?.Any() ?? false)
+         {
 
-  }
+         }
+
+     }
