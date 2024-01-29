@@ -1,25 +1,583 @@
-ALTER TABLE etrade.eServiceRequestsDetails
-add  IsMcCreated BIT DEFAULT 1;
+CREATE  Procedure etrade.Usp_CreateCustomSystemUser
+(
+@OrganizationId bigint =0,
+@EserviceUserId bigint=0
+)
+as
+begin
+DECLARE @GracePeriodForDocUpload DATETIME = '2024-02-29 00:00:00.000'
+		,@GracePeriodForBankGuarantee DATETIME = '2024-02-29 00:00:00.000'
+	DECLARE @CurrentDate DATETIME = GETDATE()
 
-ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
+DECLARE @Seq_ESR_Start BIGINT
+		,@Seq_ESR_End BIGINT
+		,@Seq_ESRD_Start BIGINT
+		,@Seq_ESRD_End BIGINT
+		,@Seq_ReqNum_Start BIGINT
+		,@Seq_ReqNum_End BIGINT
 
-AS
+/*Users*/
+	SELECT DISTINCT IDENTITY(BIGINT, 1, 1) AS Sno
+		,O.OrganizationId AS OrganizationId
+		,0 AS eServiceRequestId
+		,min(OMap.UserId) RequesterUserId
+		,'0000000000000000' AS eServiceReqNumber
+		,0 AS eServiceRequestDetailId
+		,U.UserId
+		,U.PersonalId
+		,U.AccountStatus
+		,C.EMail AS EmailId
+	--O.Name, O.LocalDescription, O.OrganizationCode, O.StateId, Config.CustomsBusinessActivityId, BPA.Name [Activity]  
+	--, OMap.isActive  
+	--,  BR.BusinessRoleId, BR.Name [Business Role], BPA.Name [Activity]  
+	INTO #Users
+	FROM Organizations O
+	INNER JOIN etrade.MobileUserOrgMaps OMap ON O.OrganizationId = OMap.OrganizationId
+	INNER JOIN etrade.MobileUser OUser ON OMap.UserId = OUser.UserId
+	INNER JOIN users U ON O.OrganizationId = U.OrganizationId
+	INNER JOIN Contacts C ON U.PersonalId = C.ParentId
+	WHERE OMap.isActive = 1
+		AND OUser.LegalEntity = 2
+		AND U.personalid NOT IN (
+			SELECT OUA.MCPersonalId
+			FROM etrade.eservicerequestsdetails OUA
+			WHERE OUA.OrganizationId = O.OrganizationId
+				AND isnull(OUA.MCPersonalId, 0) <> 0
+			)
+		AND O.OrganizationId = @OrganizationId and OUser.UserId=@EserviceUserId
+		group by O.OrganizationId,U.UserId
+		,U.PersonalId
+		,U.AccountStatus
+		,C.EMail
+	ORDER BY O.OrganizationId
 
-Select distinct Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.OrganizationId
-,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,BAS.ValueEnglish as StatusEnglishName ,BAS.ValueArabic as StatusArabicName,
-BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic,
-oa.DateCreated,
-case when oa.stateid ='OrgUserActivitiesDeletedState' then 'Deleted' --removed
-else 'Associated'
-end as Availability
+	DECLARE @RegisterUserServiceId INT
 
-From OrgUserActivities oa
-left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
-left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
-left join etrade.CustomsBusinessActivities_BPN BA on BA.Id =ob.CustomsBusinessActivityId
+	SELECT @RegisterUserServiceId = dbo.KWConstantfn('UserActivityReq_reg') --dbo.KWConstantfn('UserActivityReq')  
 
- 
+	DECLARE @totalUserActivities INT
+		,@OrgUserActId BIGINT
 
+	SET @Seq_ESR_Start = 0
+	SET @Seq_ESR_End = 0
+	SET @Seq_ESRD_Start = 0
+	SET @Seq_ESRD_End = 0
+	SET @Seq_ReqNum_Start = 0
+	SET @Seq_ReqNum_End = 0
 
+	SELECT @OrgUserActId = ISNULL(MAX(OrgUserActivityId), 0)
+	FROM [dbo].[OrgUserActivities]
 
+	SELECT @totalUserActivities = count(1)
+	FROM #Users
+
+	EXECUTE usp_MCPKCounters 'EServiceRequests_pk'
+		,@totalUserActivities
+		,@Seq_ESR_Start OUTPUT
+		,@Seq_ESR_End OUTPUT
+
+	EXECUTE usp_MCPKCounters 'EServiceRequests'
+		,@totalUserActivities
+		,@Seq_ReqNum_Start OUTPUT
+		,@Seq_ReqNum_End OUTPUT
+
+	EXECUTE usp_MCPKCounters 'EServiceRequestsDetails'
+		,@totalUserActivities
+		,@Seq_ESRD_Start OUTPUT
+		,@Seq_ESRD_End OUTPUT
+
+	UPDATE #Users
+	SET eServiceRequestId = @Seq_ESR_Start + Sno
+		,eServiceRequestDetailId = @Seq_ESRD_Start + Sno
+		,eServiceReqNumber = 'CSUR/' + CAST((@Seq_ReqNum_Start + Sno) AS VARCHAR(50)) + '/24'
+
+	--, OrgUserActivityId = @OrgUserActId + Sno  
+	SELECT DISTINCT IDENTITY(BIGINT, 1, 1) AS Sno
+		,U.eServiceRequestId AS eServiceRequestId
+		,U.OrganizationId AS OrganizationId
+		,Config.CustomsBusinessActivityId AS ActivityId
+		,U.RequesterUserId
+		,0 AS OrgUserActivityId
+		,U.UserId
+		,U.PersonalId
+	INTO #UserActivities
+	FROM #Users U
+	INNER JOIN OrganizationActivities OA ON U.OrganizationId = OA.OrganizationId
+	INNER JOIN EmployeeBusinessRoles EBR ON U.PersonalId = EBR.PersonalId
+	INNER JOIN BusinessRoles BR ON EBR.BusinessRoleId = BR.BusinessRoleId
+	LEFT JOIN dbo.CustomsBusinessActivityRolesConfig Config ON EBR.BusinessRoleId = Config.BusinessRoleId
+	INNER JOIN dbo.BusinessPartnerActivities BPA ON Config.CustomsBusinessActivityId = BPA.ActivityId
+	WHERE 
+	OA.OrganizationId = @OrganizationId
+		AND 
+		NOT EXISTS (
+			SELECT 1
+			FROM OrgUserActivities OUA
+			WHERE Oua.personalId = U.PersonalId
+				AND BPA.ActivityId = OUA.activityId
+			)
+	ORDER BY U.OrganizationId
+
+	UPDATE #UserActivities
+	SET OrgUserActivityId = @OrgUserActId + Sno
+
+	--select * from  #UserActivities  
+	INSERT INTO [eTrade].[EServiceRequests] (
+		eserviceRequestId
+		,eserviceRequestNumber
+		,createdBy
+		,stateId
+		,serviceId
+		,requesterUserId
+		,Datecreated
+		)
+	SELECT eServiceRequestId
+		,eServiceReqNumber
+		,RequesterUserId
+		,'UserActivityRequestCompletedState'
+		,@RegisterUserServiceId
+		,RequesterUserId
+		,@CurrentDate
+	FROM #Users
+
+	INSERT INTO [eTrade].[$EServiceRequests] (
+		eserviceRequestId
+		,eserviceRequestNumber
+		,createdBy
+		,stateId
+		,serviceId
+		,requesterUserId
+		,Datecreated
+		,[$AuditTrailId]
+		,[$UserId]
+		,[$Operation]
+		,[$DateTime]
+		,[$DataProfileClassId]
+		,[$IPId]
+		,[$SessionId]
+		)
+	SELECT eServiceRequestId
+		,eServiceReqNumber
+		,RequesterUserId
+		,'UserActivityRequestCompletedState'
+		,@RegisterUserServiceId
+		,RequesterUserId
+		,@CurrentDate
+		,newid()
+		,RequesterUserId
+		,0
+		,@CurrentDate
+		,'EServiceRequests'
+		,'127.0.0.1'
+		,'System'
+	FROM #Users
+
+	INSERT INTO [eTrade].[EServiceRequestsDetails] (
+		eserviceRequestDetailsId
+		,EserviceRequestId
+		,RequesterUserId
+		,requestServicesId
+		,OrganizationId
+		,ArabicFirstName
+		,ArabicSecondName
+		,ArabicThirdName
+		,ArabicLastName
+		,EnglishFirstName
+		,EnglishLastName
+		,CivilId
+		,PassportNo
+		,PassportExpiryDate
+		,CivilIdExpiryDate
+		,DateOfBirth
+		,Nationality
+		,Email
+		,MobileNumber
+		,isBankGuaranteeRequiredForCustomsUser
+		,PreferredLanguage
+		,MCPersonalId
+		,CreatedBy
+		,DateCreated
+		,StateId
+		,MobileNo
+		,UserId
+		)
+	SELECT eServiceRequestDetailId
+		,eServiceRequestId
+		,RequesterUserId
+		,@RegisterUserServiceId
+		,U.OrganizationId
+		,P_ara.FirstName
+		,P_ara.SecondName
+		,P_ara.ThirdName
+		,P_ara.LastName
+		,P.FirstName
+		,P.LastName
+		,P.CivilID
+		,P.PassportNumber
+		,P.PassportExpiryDate
+		,P.CivilIdExpiryDate
+		,P.DateOfBirth
+		,L.LocationId
+		,C.EMail
+		,C.MobileTelNumber
+		,0
+		,CASE 
+			WHEN P.LanguageId = 'ara'
+				THEN 'AR'
+			ELSE 'EN'
+			END
+		,U.PersonalId
+		,RequesterUserId
+		,@CurrentDate
+		,'UserActivityRequestCompletedState'
+		,C.MobileTelNumber
+		,U.UserId
+	FROM #Users U
+	INNER JOIN People P ON U.PersonalId = P.PersonalId
+	INNER JOIN Contacts C ON P.PersonalId = C.ParentId
+	LEFT OUTER JOIN Locations L ON P.Nationality = L.LocalDescription
+	LEFT OUTER JOIN People_ara P_ara ON P.PersonalId = P_ara.PersonalId
+
+	INSERT INTO [eTrade].[$EServiceRequestsDetails] (
+		eserviceRequestDetailsId
+		,EserviceRequestId
+		,RequesterUserId
+		,requestServicesId
+		,OrganizationId
+		,ArabicFirstName
+		,ArabicSecondName
+		,ArabicThirdName
+		,ArabicLastName
+		,EnglishFirstName
+		,EnglishLastName
+		,CivilId
+		,PassportNo
+		,PassportExpiryDate
+		,CivilIdExpiryDate
+		,DateOfBirth
+		,Nationality
+		,Email
+		,MobileNumber
+		,isBankGuaranteeRequiredForCustomsUser
+		,PreferredLanguage
+		,MCPersonalId
+		,CreatedBy
+		,DateCreated
+		,StateId
+		,[$AuditTrailId]
+		,[$UserId]
+		,[$Operation]
+		,[$DateTime]
+		,[$DataProfileClassId]
+		,[$IPId]
+		,[$SessionId]
+		)
+	SELECT eserviceRequestDetailsId
+		,EserviceRequestId
+		,RequesterUserId
+		,requestServicesId
+		,OrganizationId
+		,ArabicFirstName
+		,ArabicSecondName
+		,ArabicThirdName
+		,ArabicLastName
+		,EnglishFirstName
+		,EnglishLastName
+		,CivilId
+		,PassportNo
+		,PassportExpiryDate
+		,CivilIdExpiryDate
+		,DateOfBirth
+		,Nationality
+		,Email
+		,MobileNumber
+		,isBankGuaranteeRequiredForCustomsUser
+		,PreferredLanguage
+		,MCPersonalId
+		,CreatedBy
+		,DateCreated
+		,StateId
+		,newid()
+		,RequesterUserId
+		,0
+		,DateCreated
+		,'EServiceRequests'
+		,'127.0.0.1'
+		,'System'
+	FROM [eTrade].[EServiceRequestsDetails]
+	WHERE EServiceRequestDetailsId IN (
+			SELECT eServiceRequestDetailId
+			FROM #Users
+			)
+
+	INSERT INTO [eTrade].[EServiceRequestsPorts] (
+		EserviceRequestId
+		,PortId
+		,IsDefault
+		)
+	SELECT DISTINCT eServiceRequestId
+		,UP.LocationId
+		,CASE 
+			WHEN UP.IsDefault = 2
+				THEN 1
+			ELSE 0
+			END
+	FROM #UserActivities U
+	INNER JOIN UserPorts UP ON U.UserId = UP.UserId
+
+	INSERT INTO [eTrade].[EServiceRequestsCustomsActivities] (
+		EServiceRequestsId
+		,CustomsBusinessUserActivityId
+		)
+	SELECT eServiceRequestId
+		,ActivityId
+	FROM #UserActivities
+
+	INSERT INTO OrgUserActivities (
+		OrgUserActivityId
+		,PersonalId
+		,OrganizationId
+		,ActivityId
+		,RegisteredDate
+		,StateId
+		,DateCreated
+		,CreatedBy
+		,eServiceRequestId
+		,IsDataMigrated
+		,GracePeriodForDocUpload
+		,GracePeriodForBankGuarantee
+		,DataMigrationStatus
+		)
+	SELECT OrgUserActivityId
+		,PersonalId
+		,OrganizationId
+		,ActivityId
+		,@CurrentDate
+		,'OrgUserActivitiesActiveState'
+		,@CurrentDate
+		,RequesterUserId
+		,eServiceRequestId
+		,1
+		,@GracePeriodForDocUpload
+		,@GracePeriodForBankGuarantee
+		,0
+	FROM #UserActivities
+
+	INSERT INTO [$OrgUserActivities] (
+		OrgUserActivityId
+		,PersonalId
+		,OrganizationId
+		,ActivityId
+		,RegisteredDate
+		,StateId
+		,DateCreated
+		,CreatedBy
+		,eServiceRequestId
+		,IsDataMigrated
+		,GracePeriodForDocUpload
+		,GracePeriodForBankGuarantee
+		,DataMigrationStatus
+		,[$AuditTrailId]
+		,[$UserId]
+		,[$Operation]
+		,[$DateTime]
+		,[$DataProfileClassId]
+		,[$IPId]
+		,[$SessionId]
+		)
+	SELECT OrgUserActivityId
+		,PersonalId
+		,OrganizationId
+		,ActivityId
+		,@CurrentDate
+		,'OrgUserActivitiesActiveState'
+		,@CurrentDate
+		,RequesterUserId
+		,eServiceRequestId
+		,1
+		,@GracePeriodForDocUpload
+		,@GracePeriodForBankGuarantee
+		,0
+		,newid()
+		,RequesterUserId
+		,0
+		,@CurrentDate
+		,'EServiceRequests'
+		,'127.0.0.1'
+		,'System'
+	FROM #UserActivities
+
+	update P 
+	set  p.stateid='PeopleActivatedState' ,p.datemodified=getdate(),P.ModifiedBy='System' from 
+	#UserActivities OUA inner join people P on OUA.personalid=P.personalid
+	where p.stateid  <>'PeopleActivatedState' --and isnull(OUA.isdatamigrated,0)=1
+
+	insert into [$people] ([$UserId]
+,[$Operation]
+,[$DateTime]
+,[$DataProfileClassId]
+,[$IPId]
+,[$SessionId]
+,PersonalId
+,ParentId
+,OrganizationalUnitId
+,LanguageId
+,CultureId
+,FirstName
+,LastName
+,DateOfBirth
+,PlaceOfBirth
+,TIN
+,DateCreated
+,CreatedBy
+,DateModified
+,ModifiedBy
+,StateId
+,OwnerOrgId
+,CivilID
+,PassportNumber
+,DocType
+,DocNo
+,Gender
+,Nationality
+,DefaultPortId
+,OwnerLocId
+,PortSites
+,PassNationality
+,NewPassportNo
+,IsPassenger
+,DisplayName
+,EmpCode
+,PassportNumber1
+,PassNationality1
+,SecondName
+,ThirdName
+,FileNo
+,FieldLocation
+,RegisteredPort
+,UserType
+,TotalTransit
+,TotalImport
+,TotalExport
+,TotalTranshipment
+,TotalTransit_ARC
+,TotalImport_ARC
+,TotalExport_ARC
+,TotalTranshipment_ARC
+,DeclAuditedImpRexp
+,DeclAuditedImpRexp_ARC
+,CivilIdExpiryDate
+,PassportExpiryDate)
+select 
+'System'
+,'1'
+,Getdate()
+,'People'
+,'127.0.0.1'
+,NewId()
+,P.PersonalId
+,P.ParentId
+,P.OrganizationalUnitId
+,P.LanguageId
+,P.CultureId
+,P.FirstName
+,P.LastName
+,P.DateOfBirth
+,P.PlaceOfBirth
+,P.TIN
+,P.DateCreated
+,P.CreatedBy
+,P.DateModified
+,P.ModifiedBy
+,P.StateId
+,P.OwnerOrgId
+,P.CivilID
+,P.PassportNumber
+,P.DocType
+,P.DocNo
+,P.Gender
+,P.Nationality
+,P.DefaultPortId
+,P.OwnerLocId
+,P.PortSites
+,P.PassNationality
+,P.NewPassportNo
+,P.IsPassenger
+,P.DisplayName
+,P.EmpCode
+,P.PassportNumber1
+,P.PassNationality1
+,P.SecondName
+,P.ThirdName
+,P.FileNo
+,P.FieldLocation
+,P.RegisteredPort
+,P.UserType
+,P.TotalTransit
+,P.TotalImport
+,P.TotalExport
+,P.TotalTranshipment
+,P.TotalTransit_ARC
+,P.TotalImport_ARC
+,P.TotalExport_ARC
+,P.TotalTranshipment_ARC
+,P.DeclAuditedImpRexp
+,P.DeclAuditedImpRexp_ARC
+,P.CivilIdExpiryDate
+,P.PassportExpiryDate
+from 
+	#UserActivities OUA inner join people P on OUA.personalid=P.personalid
+	
+	/*Notifications*/
+	--Mobile-Notification          
+	INSERT INTO [etrade].[MobileNotification] (
+		[NotificationType]
+		,[ReferenceId]
+		,[UserId]
+		,[DateCreated]
+		,[ReadStatus]
+		,[ReffType]
+		,[ReffId]
+		)
+	SELECT 143 --User Registration  
+		,eServiceRequestId
+		,RequesterUserId
+		,@CurrentDate
+		,'0'
+		,'Customs System User Activity - Operations'
+		,eServiceRequestId
+	FROM #Users
+
+	---Mail-Notification           
+	INSERT INTO [dbo].[KGACEmailOutSyncQueue] (
+		[Sync]
+		,[MsgType]
+		,[UserId]
+		,[TOEmailAddress]
+		,[CCEmailAddress]
+		,[BCCEmailAddress]
+		,[DateCreated]
+		,[Status]
+		,[SampleRequestNo]
+		,[MailPriority]
+		)
+	SELECT 0
+		,'BPComplete'
+		,U.UserId
+		,m.EmailId
+		,NULL
+		,NULL
+		,@CurrentDate
+		,'Created'
+		,eServiceRequestId
+		,'Normal'
+	FROM #Users U
+	INNER JOIN [etrade].[mobileuser] m ON m.USERID = U.RequesterUserId
+	WHERE m.AccountStatus = 1
+
+	
+	/*Notifications ends*/
+	DROP TABLE #Users
+
+	DROP TABLE #UserActivities
+end
