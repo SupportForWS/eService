@@ -24,7 +24,7 @@ SELECT
   A.ADate as ActionDate,  
   a.ActivityId as ActivityId  
 FROM   
-    (SELECT top @ActivityCount StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId   
+    (SELECT top (@ActivityCount) StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId   
   FROM [$Orguseractivities]   
   WHERE PersonalId=@MCPersonalId AND ActivityId in(SELECT Id FROM @ActivityIdList) AND StateId='OrgUserActivitiesCreatedState' and
   ActivityId in(select ActivityId from Orguseractivities where stateid = 'OrgUserActivitiesDeletedState' and PersonalId = @MCPersonalId  )  
