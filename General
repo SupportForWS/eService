@@ -1,25 +1,32 @@
-ALTER TABLE etrade.eServiceRequestsDetails
-add  IsMcCreated BIT DEFAULT 1;
 
-ALTER   view [etrade].[CustomsSystemUserActivities_BPN]
+alter PROCEDURE [dbo].[USP_UserBusinessACtivityHistory]
+(
+@MCPersonalId bigint,
+@ActivityIds VARCHAR(MAX)
+)AS 
+BEGIN
+DECLARE @ActivityIdList TABLE (Id INT)
 
-AS
+    -- Split the comma-separated string into a table of integers
+    INSERT INTO @ActivityIdList (Id)
+    SELECT items
+    FROM SplitToTable_ara(@ActivityIds, ',')
+SELECT 
+	CASE When A.StateId='OrgUserActivitiesDeletedState' then 'Removed' else 'Added' END as Action ,
+		e.EServiceRequestNumber as RequestNo,
+		A.ADate as ActionDate,
+		a.ActivityId as ActivityId
+FROM 
+    (SELECT top 2 StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId 
+	 FROM [$Orguseractivities] 
+	 WHERE PersonalId=@MCPersonalId AND ActivityId in(SELECT Id FROM @ActivityIdList) AND StateId='OrgUserActivitiesCreatedState' 
+	 and PersonalId in(select personalId from Orguseractivities where stateid = 'OrgUserActivitiesDeletedState' and PersonalId = @MCPersonalId and ActivityId in (SELECT Id FROM @ActivityIdList) )
 
-Select distinct Convert(int,oa.PersonalId) as CustomsSystemUserId,oa.OrganizationId
-,oa.ActivityId as CustomsBusinessActivityId , ob.StatusId,BAS.ValueEnglish as StatusEnglishName ,BAS.ValueArabic as StatusArabicName,
-BA.NameEnglish as ActivityNameEnglish,
-BA.NameArabic as ActivityNameArabic,
-oa.DateCreated,
-case when oa.stateid ='OrgUserActivitiesDeletedState' then 'Deleted' --removed
-else 'Associated'
-end as Availability
-
-From OrgUserActivities oa
-left join etrade.OrganizationCustomsBusinessActivities_BPN ob on oa.OrganizationId = ob.OrganizationId and oa.ActivityId = ob.CustomsBusinessActivityId
-left join etrade.CustomsBusinessActivityStatuses BAS on ob.StatusId = BAS.Id
-left join etrade.CustomsBusinessActivities_BPN BA on BA.Id =ob.CustomsBusinessActivityId
-
- 
-
-
-
+   UNION ALL
+     SELECT StateId , ActivityId ,isnull(DateModified,DateCreated) AS ADate,eServiceRequestId 
+	  FROM Orguseractivities 
+	  WHERE PersonalId=@MCPersonalId AND ActivityId in(SELECT Id FROM @ActivityIdList)  
+    )A 
+JOIN [etrade].[EServiceRequests] e ON e.EServiceRequestId=a.eServiceRequestId
+ORDER BY ActionDate 
+END
