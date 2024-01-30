@@ -1,38 +1,26 @@
-USE [Microclearlight_BPMigration_Dev]
-GO
-/****** Object:  StoredProcedure [dbo].[USP_UserBusinessACtivityHistory]    Script Date: 1/29/2024 11:31:16 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[USP_UserBusinessACtivityHistory]  
-(  
-@MCPersonalId bigint,  
-@ActivityIds VARCHAR(MAX) ,
-@ActivityCount int
-)AS   
-BEGIN  
-DECLARE @ActivityIdList TABLE (Id INT)  
-  
-    -- Split the comma-separated string into a table of integers  
-    INSERT INTO @ActivityIdList (Id)  
-    SELECT items  
-    FROM SplitToTable_ara(@ActivityIds, ',')  
-SELECT   
- CASE When A.StateId='OrgUserActivitiesDeletedState' then 'Removed' else 'Added' END as Action ,  
-  e.EServiceRequestNumber as RequestNo,  
-  A.ADate as ActionDate,  
-  a.ActivityId as ActivityId  
-FROM   
-    (SELECT top (@ActivityCount) StateId , ActivityId,[$DateTime] AS ADate,eServiceRequestId   
-  FROM [$Orguseractivities]   
-  WHERE PersonalId=@MCPersonalId AND ActivityId in(SELECT Id FROM @ActivityIdList) AND StateId='OrgUserActivitiesCreatedState' and
-  ActivityId in(select ActivityId from Orguseractivities where stateid = 'OrgUserActivitiesDeletedState' and PersonalId = @MCPersonalId  )  
-   UNION ALL  
-     SELECT StateId , ActivityId ,isnull(DateModified,DateCreated) AS ADate,eServiceRequestId   
-   FROM Orguseractivities   
-   WHERE PersonalId=@MCPersonalId AND ActivityId in(SELECT Id FROM @ActivityIdList)    
-    )A   
-JOIN [etrade].[EServiceRequests] e ON e.EServiceRequestId=a.eServiceRequestId  
-ORDER BY ActionDate   
-END
+
+                    serviceRequestDetails = new ServiceRequestsDetail(
+                        eserviceRequestDetailsId: requestDtaislsIds[0],
+                        eserviceRequestId: serviceRequest.EserviceRequestId,
+                        createdBy: _UserIdString,
+                        organizationId: _UserOrganizationId,
+                        userId: UserDetails.UserId,
+                        serviceId: (int)ServiceTypesEnum.UpdateOrActivateCustomsSystemUser,
+                        preferredLanguage: _LanguageString,
+                        arabicFirstName: customsSystemUser.FirstNameArabic,
+                        arabicSecondName: customsSystemUser.SecondNameArabic,
+                        arabicThirdName: customsSystemUser.ThirdNameArabic,
+                        stateId: CustomsSystemUserStatesEnum.UserActivityRequestCreatedState.ToString(),
+                        arabicLastName: customsSystemUser.LastNameArabic,
+                        englishFirstName: customsSystemUser.FirstNameEnglish,
+                        englishLastName: customsSystemUser.SecondNameEnglish,
+                        nationality: int.Parse(customsSystemUser.Nationality),
+                        civilIdexpiryDate: customsSystemUser.CivilIdExpiryData,
+                        mobileNumber: customsSystemUser.MobileNumber.ToString(),
+                        passportExpiryDate: customsSystemUser.PassportExpiryData,
+                        email: customsSystemUser.EmailId,
+                        passportNumber: customsSystemUser.PassportNumber,
+                        dateOfBirth: customsSystemUser.DateOfBirth,
+                        civilId: customsSystemUser.CivilIdNumber,
+                        MCPersonalId: UserDetails.PersonalId
+                       );
