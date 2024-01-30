@@ -1,1 +1,1 @@
-                Nationality = NationalityAra.NationalityType().Where(i => i.Id == request._userDetails.Nationality.ToString()).FirstOrDefault().Name;
+update dbo.OrgUserActivities set personalid =1767598
