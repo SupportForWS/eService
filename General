@@ -1,5 +1,1 @@
-use Microclearlight_BPMigration_Dev
-select * from organizations o
---left join users p on p.organizationid = o.organizationid
-where o.organizationid not in(select organizationid from etrade.mobileuserorgmaps) and organizationtypeid <>33223550 and o.organizationid  in(select organizationid from users)
-order by 1 desc
+                Nationality = NationalityAra.NationalityType().Where(i => i.Id == request._userDetails.Nationality.ToString()).FirstOrDefault().Name;
