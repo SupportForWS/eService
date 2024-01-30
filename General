@@ -1,1 +1,4 @@
-update dbo.OrgUserActivities set personalid =1767598
+ public char? IsDelivered { get; set; }
+ public string? UserDetailsReceivedby { get; set; }
+ public string? RecipientsMobileNo { get; set; }
+ public string? RecipientCivilId { get; set; }
