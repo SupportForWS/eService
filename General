@@ -1,26 +1,5 @@
-
-                    serviceRequestDetails = new ServiceRequestsDetail(
-                        eserviceRequestDetailsId: requestDtaislsIds[0],
-                        eserviceRequestId: serviceRequest.EserviceRequestId,
-                        createdBy: _UserIdString,
-                        organizationId: _UserOrganizationId,
-                        userId: UserDetails.UserId,
-                        serviceId: (int)ServiceTypesEnum.UpdateOrActivateCustomsSystemUser,
-                        preferredLanguage: _LanguageString,
-                        arabicFirstName: customsSystemUser.FirstNameArabic,
-                        arabicSecondName: customsSystemUser.SecondNameArabic,
-                        arabicThirdName: customsSystemUser.ThirdNameArabic,
-                        stateId: CustomsSystemUserStatesEnum.UserActivityRequestCreatedState.ToString(),
-                        arabicLastName: customsSystemUser.LastNameArabic,
-                        englishFirstName: customsSystemUser.FirstNameEnglish,
-                        englishLastName: customsSystemUser.SecondNameEnglish,
-                        nationality: int.Parse(customsSystemUser.Nationality),
-                        civilIdexpiryDate: customsSystemUser.CivilIdExpiryData,
-                        mobileNumber: customsSystemUser.MobileNumber.ToString(),
-                        passportExpiryDate: customsSystemUser.PassportExpiryData,
-                        email: customsSystemUser.EmailId,
-                        passportNumber: customsSystemUser.PassportNumber,
-                        dateOfBirth: customsSystemUser.DateOfBirth,
-                        civilId: customsSystemUser.CivilIdNumber,
-                        MCPersonalId: UserDetails.PersonalId
-                       );
+use Microclearlight_BPMigration_Dev
+select * from organizations o
+--left join users p on p.organizationid = o.organizationid
+where o.organizationid not in(select organizationid from etrade.mobileuserorgmaps) and organizationtypeid <>33223550 and o.organizationid  in(select organizationid from users)
+order by 1 desc
