@@ -1,1 +1,30 @@
-Exec  USP_UserBusinessACtivityHistory @MCPersonalId=1861244,@ActivityIds='2,4',@ActivityCount = 2
+USE [Microclearlight_BPMigration_Dev]
+GO
+
+/****** Object:  View [etrade].[PortTypesAndLocationsVw]    Script Date: 1/31/2024 2:03:10 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+ALTER view [etrade].[PortTypesAndLocationsVw]
+AS
+Select pal.PortTypeId,pal.PortTypeTypeId,pal.CountryId,
+		pt.Name as EngPortType, pt.LocalDescription as AraPortType,
+		ptt.Name as EngPortTypeType, ptt.LocalDescription as AraPortTypeType,
+		loc.Name as EngCountry, loc.LocalDescription as AraCountry,
+		Ba.Id as ActivityId,
+		BA.NameArabic as ActivityNameArabic,
+		BA.NameEnglish as ActivityNameEnglish
+ from etrade.PortTypesAndLocations pal
+					inner join Locations loc on loc.LocationId = pal.CountryId
+					inner join types ptt on ptt.TypeId = pal.PortTypeTypeId
+					inner join Locations pt on pt.LocationId = pal.PortTypeId
+					LEFT JOIN etrade.Busineesactivityporttypes BAP 
+						ON BAP.PortTypeTypeId = pal.PortTypeTypeId 
+					left join etrade.CustomsBusinessActivities_BPN BA on  Ba.Id =BAP.BusinessActivityId
+GO
+
