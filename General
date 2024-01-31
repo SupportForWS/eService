@@ -1,1 +1,2 @@
-select * from Users where organizationid = 1811600
+CREATE VIEW etrade.UsersVW AS
+SELECT * FROM dbo.users
