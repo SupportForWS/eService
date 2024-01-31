@@ -1,4 +1,1 @@
- public char? IsDelivered { get; set; }
- public string? UserDetailsReceivedby { get; set; }
- public string? RecipientsMobileNo { get; set; }
- public string? RecipientCivilId { get; set; }
+select * from Users where organizationid = 1811600
