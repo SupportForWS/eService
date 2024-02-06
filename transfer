@@ -1,11 +1,3 @@
-        /// <summary>
-        /// Check the existence of request to change the organization name
-        /// </summary>
-        /// <remarks>
-        /// This function is used to check if there is an active request to change the name of the organization to prevent the user from providing any other service if there is a request to change the name of the organization.
-        /// </remarks>
-        /// <param name="userId">Represent UserId in etrade.mobileuser table and read from the token </param>
-        /// <author>Rama</author>
+<author>Rama</author>
         /// <LastUpdate></LastUpdate>
         /// <LastUpdateby>Rama</LastUpdateby>
-        /// <returns></returns>
