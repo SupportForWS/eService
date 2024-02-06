@@ -1,3 +1,1 @@
-<author>Rama</author>
-        /// <LastUpdate></LastUpdate>
-        /// <LastUpdateby>Rama</LastUpdateby>
+  select * from BrokLicenseDetails where BrokerFileNumber=0059
