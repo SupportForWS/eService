@@ -1,1 +1,1 @@
-  select * from BrokLicenseDetails where BrokerFileNumber=0059
+SELECT * FROM  dbo.ListAllBrokersVw  WHERE civilid in( '280031700463')
