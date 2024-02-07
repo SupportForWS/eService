@@ -1,95 +1,13 @@
-  CREATE TABLE #TEMP (outputid VARCHAR(400));  
-  
-  -- Insert the output of stored procedures into temp table            
-  INSERT INTO #TEMP  
-  EXEC etrade.Usp_MApp_GetAssociatedOrganizationsUsingOrgClearanceFileNumber 24274;  
-  select * from #TEMP
-SELECT DISTINCT --ERS.stateid as 'OpStateid',            
-      sb.OrganizationId AS 'OrganizationId'  
-      ,sb.NAME AS BrokerName  
-      ,bld.LicenseNo AS TradeLicenseNumber  
-      ,'SubBrokerDetails' AS "TableName"  
-      ,  
-      --  ISNULL(T.NAME, BrokerType.NAME) AS BrokerType,BrokerType.Name as EseBrokerType         
-      ISNULL(T.NAME, BrokerType.localdescription) AS BrokerType  
-      ,BrokerType.NAME AS EseBrokerType  
-      ,CASE BBD.StateId  
-       WHEN 'BrokBGDetailActivatedState'  
-        THEN 'ACTIVE'  
-       WHEN 'BrokBGDetailDeActivatedState'  
-        THEN 'DEACTIVE'  
-      -- ELSE BBD.StateId  --qasem2024
-	   ELSE 'INACTIVE' --qasem2024
-      -- END AS AccountStatus --qasem2024 
-       END AS BGStatus --qasem2024  
+USE [Microclearlight_BPMigration]
+GO
 
-	   --qasem2024 
-	   ,sb.StateId  
-	   ,CASE sb.StateId  
-        WHEN 'OrganizationsCreatedState'  
-         THEN 'ACTIVE'  
-        WHEN 'OrganizationsModifyState'  
-         THEN 'ACTIVE'  
-        WHEN 'OrganizationsNotActivatedState'  
-         THEN 'DEACTIVE'  
-        WHEN 'OrganizationsTransferredState'  
-         THEN 'TRANSFERRED'  
-        ELSE 'INACTIVE'  
-        END AS AccountStatus  
+DECLARE	@return_value int
 
+EXEC	@return_value = [etrade].[Sp_SubBrokerDetailsForEservices]
+		@OrganizationIDS = N'1861293',
+		@Userid = N'24274',
+		@serviceid = 13
 
-      ,BrokerType.TypeId  
-      ,ISNULL(BBD.BGNo, '--') AS BankGuaranteeNo  
-      ,BBD.BGExpiryDt AS BankGuaranteeExpiryDate  
-      ,CONVERT(VARCHAR, BBD.BGExpiryDt, 103) AS 'BankGuaranteeExpiryDatee'  
-      ,'' AS PersonalId --qasem2  
-     FROM Organizations O -- Parent Organizations and File Number      
-     INNER JOIN SubOrg SO ON O.OrganizationId = SO.MainOrgId  
-      AND SO.ChildOrgId IN (  
-       SELECT *  
-       FROM #TEMP  
-       )  
-     INNER JOIN BrokerOrgDetails BOD ON SO.ChildOrgId = BOD.BrokerOrgId -- Special Broker      
-     INNER JOIN organizations sb ON BOD.BrokerOrgId = sb.OrganizationId  
-     LEFT JOIN BrokBGDetails BBD ON BBD.BrokerOrgId = bod.BrokerOrgId  
-    --  AND BBD.StateId NOT IN ('BrokBGDetailDeActivatedState')  qasem2024
-	  AND BBD.StateId IN ('BrokBGDetailActivatedState','BrokBGDetailExpiredState')   --qasem2024
-     INNER JOIN BrokLicenseDetails BLD ON BLD.BrokerOrgId = SO.ChildOrgId -- Special Broker License Details and File Number      
-     INNER JOIN BrokerImporter BI ON BI.BrokerOrgId = SO.ChildOrgId  
-     INNER JOIN Types BrokerType ON BrokerType.TypeId = bod.BrokerTypeId  
-     LEFT JOIN Types_ara T ON BrokerType.TypeId = T.TypeId  
-     /*WHERE o.OrganizationId IN (  
-       SELECT outputid  
-       FROM #TEMP  
-       ) AND --omar --mohan    */
-      WHERE o.StateId IN (  
-       'OrganizationsModifyState' 
-   ,'OrganizationsCreatedState'  
-   ,'OrganizationsNotActivatedState'
-   ,'DRPeopleDeActivatedState'
-   ,--qasem3  
-   'DRPeopleCreatedState')  
-       
-      AND isnull(SO.ChildOrgId, 0) NOT IN (  
-       SELECT OrganizationId  
-       FROM etrade.EServiceRequestsDetails  
-       WHERE StateId IN (  
-         'EServiceRequestDetailsProceedState'  
-         ,'EServicesRequestDetailsSubmittedState'  
-         ,'EServicesRequestDetailsCreatedState'  
-         ,'EServiceRequestDetailsReSubmittedState'  
-         )  
-        AND RequestServicesId = 13  
-        AND RequesterUserId = 24274  
-       )  
-	   DROP TABLE IF EXISTS #TEMP
+SELECT	'Return Value' = @return_value
 
---	   select * from organizations where orgfilenumber='0059'
---select top 1 *  from Organizations where TradeLicenseNumber='71886'
---and orgfilenumber is not null and StateId != 'OrganizationsOnHoldState'
-
-  --select * from BrokLicenseDetails where BrokerFileNumber=0044
-  --select * from BrokerOrgDetails where BrokerOrgId in(319703,1861349)
-  --update BrokLicenseDetails set brokerfilenumber = null where brokerorgid = 319703
-  --select * from types where typeid =33224592
-  --select * from etrade.MobileUser where ImporterLicenseNumber like '%/%'
+GO
