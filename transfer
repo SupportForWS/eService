@@ -1,13 +1,1 @@
-USE [Microclearlight_BPMigration]
-GO
-
-DECLARE	@return_value int
-
-EXEC	@return_value = [etrade].[Sp_SubBrokerDetailsForEservices]
-		@OrganizationIDS = N'1861293',
-		@Userid = N'24274',
-		@serviceid = 13
-
-SELECT	'Return Value' = @return_value
-
-GO
+etrade.Usp_CreateCustomSystemUser
