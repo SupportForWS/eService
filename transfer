@@ -1,1 +1,1 @@
-update orgimporterLicense set LicenseExpiryDate ='2025-10-22 09:53:29.170' where organizationid in(1811560,1811556)
+select name,orgfilenumber,* from organizations where organizationid =1762156  
