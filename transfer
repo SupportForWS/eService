@@ -1,4 +1,2 @@
-select * from DataProfileClasses where dataprofileclassid='' => Display all data profiles in the system
-
-select * from DataProfileClassMembers where dataprofileclassid ='' => Display all data profiles members for each data profile the system
-ValueDataProfileClassId column used to display the value for this coulm get from where
+select * from Assemblies where assemblyid= '' display  all modules or asseblies in the system
+select * from actors where actorid = '' display  all actors in the system
