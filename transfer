@@ -1,1 +1,4 @@
-select * from DataProfileClasses where dataprofileclassid =
+select * from DataProfileClasses where dataprofileclassid='' => Display all data profiles in the system
+
+select * from DataProfileClassMembers where dataprofileclassid ='' => Display all data profiles members for each data profile the system
+ValueDataProfileClassId column used to display the value for this coulm get from where
