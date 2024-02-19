@@ -1,2 +1,4 @@
-select * from Assemblies where assemblyid= '' display  all modules or asseblies in the system
-select * from actors where actorid = '' display  all actors in the system
+ var commercialLic = await _ieServicesUnitOfWork.OrganizationsRepository.Get()
+     .Where(a => a.OrganizationId == OrganizationId)
+     .Select(a => a.CommercialLicenseNo)
+     .FirstOrDefaultAsync();
