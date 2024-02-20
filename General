@@ -1,1 +1,6 @@
-		update dbo.OrgImporterLicense set StateId='OrgImporterLicenseDeActivatedState' where organizationid= '1861431'
+select * from DataProfileClassWFStates where dataprofileclassid ='RamaNewZpatients' =>display all stated added to each profile
+select * from WorkflowTransitions where dataprofileclassid ='RamaNewZpatients' =>Display all transition when from and tostateid have the same value that mean is self transition
+
+select * from WorkflowRolesPermissions where transitionid in(select transitionid from WorkflowTransitions where dataprofileclassid ='RamaNewZpatients') => display what is the permission for each transition 
+
+select * from WorkflowUsersPermissions where TransitionId in(select transitionid from WorkflowTransitions where dataprofileclassid ='RamaNewZpatients')
