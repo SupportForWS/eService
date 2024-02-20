@@ -1,5 +1,2 @@
- var commercialLic = await _ieServicesUnitOfWork.OrganizationsRepository.Get()
-     .Where(a => a.OrganizationId == OrganizationId)
-     .Select(a => a.CommercialLicenseNo)
-     .FirstOrDefaultAsync();
-update organizations set  CommercialLicenseNo ='' where organizationid =34265
+	select * from ServiceActions where dataprofileid ='RamaNewZPatients' --Display all service actions 
+	Select * from ServiceActionSteps where serviceActionId like'%GetNewRamaPatient%' -- display all service action steps associated with each service action based on the serviceactionid
