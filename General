@@ -1,8 +1,1 @@
-Customs Manifest,SysCustoms, cmanifest
-SysCustoms,ClearingAgent,ClearingAgentPayer,
-Customs Operation,SysCustoms,CustomsStatReports,OriginalDigDocRequestor,
-GCS Cashier,SysCustoms,GCSePaymentAnalyst,RSFDataEntry,RevenueValidationBypassUser,
-ChiefInspector,SysCustoms,Inspector,InspectorSupervisor,CustomsExit Gate,
-SysCustoms,InspectorWriter,AirManifestforClosing,
-ChiefInspector,SysCustoms,Inspector,InspectorSupervisor,CustomsExit Gate,
-CarrierAndShippingAgentManager,Export Agent,
+[etrade].[EpaymentSearchDropdown]
