@@ -1,3 +1,11 @@
-  <Menu id="RamaNewZPatient" CaptionId="RamaNewZPatients.RamaNewZPatient" OnClick="" Description="Patients menu">
-    <Item id="RamaPatientSubMenu" CaptionId="RamaNewZPatients.Patient" OnClick="" action="ListRamaPatients" Description="List all patients" />
-  </Menu>
+else if (menuid == "RamaNewZPatient")
+	{
+		if (submenuid == "")
+		{
+			;
+		}
+		else if (submenuid == "RamaPatientSubMenu")
+		{
+			;
+		}
+	}
