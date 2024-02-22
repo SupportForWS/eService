@@ -9,3 +9,6 @@ else if (menuid == "RamaNewZPatient")
 			;
 		}
 	}
+  <Menu id="RamaNewZPatient" CaptionId="RamaNewZPatients.RamaNewZPatient" OnClick="" Description="Patients menu">
+    <Item id="RamaPatientSubMenu" CaptionId="RamaNewZPatients.Patient" OnClick="menuLink(Array('profileid','actionid', 'actioncriteria', 'nextactionid', 'nextactioncriteria', 'pageid','continue'),Array('','ListRamaPatients','','','','RamaNewPatientLsPg','0'))" action="ListRamaPatients" Description="List all patients" />
+  </Menu>
