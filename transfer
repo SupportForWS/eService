@@ -1,2 +1,3 @@
-	select * from ServiceActions where dataprofileid ='RamaNewZPatients' --Display all service actions 
-	Select * from ServiceActionSteps where serviceActionId like'%GetNewRamaPatient%' -- display all service action steps associated with each service action based on the serviceactionid
+  <Menu id="RamaNewZPatient" CaptionId="RamaNewZPatients.RamaNewZPatient" OnClick="" Description="Patients menu">
+    <Item id="RamaPatientSubMenu" CaptionId="RamaNewZPatients.Patient" OnClick="" action="ListRamaPatients" Description="List all patients" />
+  </Menu>
