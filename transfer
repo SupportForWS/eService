@@ -1,14 +1,12 @@
-else if (menuid == "RamaNewZPatient")
-	{
-		if (submenuid == "")
-		{
-			;
-		}
-		else if (submenuid == "RamaPatientSubMenu")
-		{
-			;
-		}
-	}
-  <Menu id="RamaNewZPatient" CaptionId="RamaNewZPatients.RamaNewZPatient" OnClick="" Description="Patients menu">
-    <Item id="RamaPatientSubMenu" CaptionId="RamaNewZPatients.Patient" OnClick="menuLink(Array('profileid','actionid', 'actioncriteria', 'nextactionid', 'nextactioncriteria', 'pageid','continue'),Array('','ListRamaPatients','','','','RamaNewPatientLsPg','0'))" action="ListRamaPatients" Description="List all patients" />
-  </Menu>
+Status
+New
+PendingAuthorization
+AuthorizationCompleted
+Approved
+Expired
+Cancelled
+PendingRequesterApproval
+PendingAuthorizerApproval
+RequesterReject
+AuthorizerReject
+RequeterAndAuthorizerReject
