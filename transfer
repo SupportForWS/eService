@@ -1,1 +1,3 @@
-			string patiendId = ServiceFactory.GetBusinessManagerInstance().GetNextCounterValue("RamaNewZPatients").ToString();
+ArrayList profileDetails = new ArrayList();
+			profileDetails.Add((object)"RamaNewZPatients");
+			this.SaveProfile(profileDetails, false);
