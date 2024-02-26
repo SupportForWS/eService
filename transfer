@@ -1,1 +1,1 @@
-			this.WriteToProperty("servicedocument.data.RamaNewZPatientsrecords.RamaNewZPatients.PatientId", "1");
+			string patiendId = ServiceFactory.GetBusinessManagerInstance().GetNextCounterValue("RamaNewZPatients").ToString();
