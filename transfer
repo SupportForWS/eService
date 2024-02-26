@@ -1,12 +1,1 @@
-Status
-New
-PendingAuthorization
-AuthorizationCompleted
-Approved
-Expired
-Cancelled
-PendingRequesterApproval
-PendingAuthorizerApproval
-RequesterReject
-AuthorizerReject
-RequeterAndAuthorizerReject
+			  <MSESControl action="" CaptionId="common.back" id="closeBtn" name="closeBtn" OnClick="setParameterList(global_arrRegParameters, Array('','ListRamaPatients','','', '','RamaNewPatientLsPg','')); pageSubmit(null,true);" ToolTip="common.back" type="button" />
