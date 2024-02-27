@@ -1,3 +1,1 @@
-ArrayList profileDetails = new ArrayList();
-			profileDetails.Add((object)"RamaNewZPatients");
-			this.SaveProfile(profileDetails, false);
+        public XmlDocument GetProfile(string profileName, string criteria, string orderBy, int pageNumber, int pageSize, ProfileParam[] otherProfiles, bool onlySpecifiedProfiles, int levelOfNesting, int iRequiredPages);
