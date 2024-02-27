@@ -1,3 +1,1 @@
-  <Cell CaptionId="StateId" class="view-text-pad" id="Cell1" type="lcell">
-        <MSESControl action="OpenRamaPatients" CaptionId="reports.Open" class="view-text-pad" OnClick="setParameterList(global_arrRegParameters, Array('','OpenRamaPatients','','', '','RamaNewPatientFrPg',''));" SuppressPercent="no" type="listlink" />
-      </Cell>
+          <param Attribute="PatientId" name="RamaNewZPatients.PatientId" SourceNode="" withquote="yes" />
