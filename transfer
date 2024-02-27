@@ -1,1 +1,3 @@
-        public XmlDocument GetProfile(string profileName, string criteria, string orderBy, int pageNumber, int pageSize, ProfileParam[] otherProfiles, bool onlySpecifiedProfiles, int levelOfNesting, int iRequiredPages);
+  <Cell CaptionId="StateId" class="view-text-pad" id="Cell1" type="lcell">
+        <MSESControl action="OpenRamaPatients" CaptionId="reports.Open" class="view-text-pad" OnClick="setParameterList(global_arrRegParameters, Array('','OpenRamaPatients','','', '','RamaNewPatientFrPg',''));" SuppressPercent="no" type="listlink" />
+      </Cell>
