@@ -1,1 +1,1 @@
-                TimeSpan timeDifference = currentDate - individualRequestDetails.CreatedAt;
+LockupScreen(sBaseFormName,sPageId,sAction,sActionCriteria,availWidth,availHeight,bScroll,bResize,sInDataXml,sXmlString,sSiteFormAction)
