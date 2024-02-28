@@ -1,1 +1,1 @@
-    <MSESControl CaptionId="common.new" class="mcbutton" id="BtnNew" MultiClick="yes" name="BtnNew" OnClick="setParameterList(Array('actionid','pageid'), Array('GetNewRamaPatients','RamaNewPatientFrPg'));" type="submit" value="submitbutton1" />
+                TimeSpan timeDifference = currentDate - individualRequestDetails.CreatedAt;
