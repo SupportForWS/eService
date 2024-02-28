@@ -1,7 +1,1 @@
-<LeftSide>
-		<Search action ="ListRamaPatients" ButtonLocation ="Bottom">
-			<MSESControl class="textbox" CompareOperator=" Like " NameInProfile="RamaNewZPatients.Code" Size="26" name="txtCode" CaptionId="RamaNewZPatients.Code" SubType="text" IsLangDepd="no" type="text" id="txtCode" />
-			<MSESControl class="textbox" CompareOperator=" Like " NameInProfile="RamaNewZPatients.FirstName" Size="26" name="txtFirstname" CaptionId="RamaNewZPatients.FirstName" SubType="text" IsLangDepd="no" type="text" id="txtFirstname" />
-
-		</Search>
-	</LeftSide>
+    <MSESControl CaptionId="common.new" class="mcbutton" id="BtnNew" MultiClick="yes" name="BtnNew" OnClick="setParameterList(Array('actionid','pageid'), Array('GetNewRamaPatients','RamaNewPatientFrPg'));" type="submit" value="submitbutton1" />
