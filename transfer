@@ -1,1 +1,8 @@
-LockupScreen(sBaseFormName,sPageId,sAction,sActionCriteria,availWidth,availHeight,bScroll,bResize,sInDataXml,sXmlString,sSiteFormAction)
+   <Cell type="ncell" width="20%">
+        <MSESControl CaptionId="RegistrationDate" class="form_field_label" id="Label1" type="label" />
+      </Cell>
+      <Cell type="ncell" width="30%">
+        <MSESControl Attribute="RegistrationDate" class="textbox" id="txtRegistrationDate" MaxLength="" name="txtRegistrationDate" nPres="0" Required="no" SourceNode="data.RamaNewZPatientsrecords.RamaNewZPatients" SubType="date" type="text" />
+        <MSESControl class="mcCalenderButton" id="txtRegistrationDateDatePicker" MultiClick="yes" name="txtRegistrationDateDatePicker" OnClick="ShowFloatCalendar('txtRegistrationDate')" type="button" value="normalbutton1" />
+      </Cell>
+      <Cell type="ncell">
