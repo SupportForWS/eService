@@ -1,5 +1,18 @@
-IF EXISTS(SELECT 1 FROM ETRADE.EServiceRequests A INNER JOIN ETRADE.EServiceRequestsDetails B ON A.EServiceRequestId=B.EserviceRequestId
-WHERE A.ServiceId=@serviceid AND (B.ImporterLicenseNo=@ImporterLicenseNo OR
-B.IndustrialLicenseNo=@IndustrialLicenseNo OR B.CommercialLicenseNo=@CommercialLicenseNo) AND B.OrganizationId=@OrgId
-AND A.StateId IN('EServiceRequestORGSubmittedState','EServiceRequestORGForAdditionalInfo'
-,'EServiceRequestORGForVisitState','EServiceRequestORGReSubmittedState')  AND a.eServiceRequestId!=@eServiceRequestId and  a.requesteruserid =@userid)
+DR Data Entry License Issuance Service
+DR Data Entry License Renew Service
+DR Data Entry License Cancellation Service
+DR Data Entry License Deactivate Service
+Print Lost DR Data Entry License Card Service
+DR Data Entry Broker Affair Letters Printing Service
+
+
+Release Bank Guarantee - Revenue Control
+Good conduct and behavior- General Directorate of Criminal Evidence
+Change Job Title and Renew Residency- General Authority for Manpower
+Change Job Title and Transfer Residency- General Authority for Manpower
+Residency Renew- General Authority for Manpower
+Manpower Residency Transfer- General Authority for Manpower
+Change Job Title- General Authority for Manpower
+Change Job Title- With Broker License- General Authority for Manpower
+
+Bank Guarantee Services
