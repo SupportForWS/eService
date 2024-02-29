@@ -1,8 +1,5 @@
-   <Cell type="ncell" width="20%">
-        <MSESControl CaptionId="RegistrationDate" class="form_field_label" id="Label1" type="label" />
-      </Cell>
-      <Cell type="ncell" width="30%">
-        <MSESControl Attribute="RegistrationDate" class="textbox" id="txtRegistrationDate" MaxLength="" name="txtRegistrationDate" nPres="0" Required="no" SourceNode="data.RamaNewZPatientsrecords.RamaNewZPatients" SubType="date" type="text" />
-        <MSESControl class="mcCalenderButton" id="txtRegistrationDateDatePicker" MultiClick="yes" name="txtRegistrationDateDatePicker" OnClick="ShowFloatCalendar('txtRegistrationDate')" type="button" value="normalbutton1" />
-      </Cell>
-      <Cell type="ncell">
+IF EXISTS(SELECT 1 FROM ETRADE.EServiceRequests A INNER JOIN ETRADE.EServiceRequestsDetails B ON A.EServiceRequestId=B.EserviceRequestId
+WHERE A.ServiceId=@serviceid AND (B.ImporterLicenseNo=@ImporterLicenseNo OR
+B.IndustrialLicenseNo=@IndustrialLicenseNo OR B.CommercialLicenseNo=@CommercialLicenseNo) AND B.OrganizationId=@OrgId
+AND A.StateId IN('EServiceRequestORGSubmittedState','EServiceRequestORGForAdditionalInfo'
+,'EServiceRequestORGForVisitState','EServiceRequestORGReSubmittedState')  AND a.eServiceRequestId!=@eServiceRequestId and  a.requesteruserid =@userid)
