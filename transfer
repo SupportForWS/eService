@@ -1,18 +1,7 @@
-DR Data Entry License Issuance Service
-DR Data Entry License Renew Service
-DR Data Entry License Cancellation Service
-DR Data Entry License Deactivate Service
-Print Lost DR Data Entry License Card Service
-DR Data Entry Broker Affair Letters Printing Service
+		ProfileParam[] profileParams = new ProfileParam[1];
+			profileParams[0] = new ProfileParam();
+			profileParams[0].ProfileName = "City";
+			this.ByPassSecurity = true;
 
-
-Release Bank Guarantee - Revenue Control
-Good conduct and behavior- General Directorate of Criminal Evidence
-Change Job Title and Renew Residency- General Authority for Manpower
-Change Job Title and Transfer Residency- General Authority for Manpower
-Residency Renew- General Authority for Manpower
-Manpower Residency Transfer- General Authority for Manpower
-Change Job Title- General Authority for Manpower
-Change Job Title- With Broker License- General Authority for Manpower
-
-Bank Guarantee Services
+			this.GetDomainData(profileParams, false);
+			this.ByPassSecurity = false;
