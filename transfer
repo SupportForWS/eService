@@ -1,1 +1,3 @@
-nClick="menuLink(Array('profileid','actionid', 'actioncriteria', 'nextactionid', 'nextactioncriteria', 'pageid','continue'),Array('','ListRamaPatients','','','','RamaNewPatientLsPg','0'))" 
+ <system.xml>
+    <xslt limitXPathComplexity="false" />
+  </system.xml>
