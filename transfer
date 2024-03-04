@@ -1,1 +1,1 @@
-MCgetAttribute('data/RamaNewZPatientsrecords/RamaNewZPatients/@PatientId',null);
+nClick="menuLink(Array('profileid','actionid', 'actioncriteria', 'nextactionid', 'nextactioncriteria', 'pageid','continue'),Array('','ListRamaPatients','','','','RamaNewPatientLsPg','0'))" 
