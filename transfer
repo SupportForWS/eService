@@ -1,3 +1,2 @@
- <system.xml>
-    <xslt limitXPathComplexity="false" />
-  </system.xml>
+select * from etrade.individualauthorizationrequests where TemporaryRequestNumber ='TIA/140/24'
+select * from KGACPACIQueue order by 1 desc
