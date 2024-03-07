@@ -1,4 +1,15 @@
-DECLARE @OrgId nvarchar(200)  
-SET  @OrgId=(SELECT top 1 a.ORGANIZATIONID FROM etrade.mobileuserorgmaps a INNER JOIN etrade.mobileuser b   
-on  a.userid=b.userid AND a.ParentOrgTradeLicence=b.LicenseNumber WHERE a.isActive=1 and 
-a.userid=@UserId ORDER BY a.mobileuserorgmapid desc)
+    string orgId = string.Empty;
+    if(string.IsNullOrEmpty(userId))
+    {
+        return orgId;
+    }
+    var x = _IeServicesUnitOfWork.MobileUserOrgMapRepository
+    .Join(_IeServicesUnitOfWork.UserRepository,
+        a => new { a.UserId, a.ParentOrgTradeLicence },
+        b => new { b.UserId, b.LicenseNumber },
+        (a, b) => new { a, b })
+    .Where(x => x.a.IsActive && x.a.UserId == userId)
+    .OrderByDescending(x => x.a.MobileUserOrgMapId)
+    .Select(x => x.a.OrganizationId)
+    .FirstOrDefault();
+}
