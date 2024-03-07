@@ -1,1 +1,4 @@
-https://eservicesui.kgac.gov.kw/BP/#/pages/services/re-new-import-license
+DECLARE @OrgId nvarchar(200)  
+SET  @OrgId=(SELECT top 1 a.ORGANIZATIONID FROM etrade.mobileuserorgmaps a INNER JOIN etrade.mobileuser b   
+on  a.userid=b.userid AND a.ParentOrgTradeLicence=b.LicenseNumber WHERE a.isActive=1 and 
+a.userid=@UserId ORDER BY a.mobileuserorgmapid desc)
