@@ -1,2 +1,1 @@
-select * from etrade.individualauthorizationrequests where TemporaryRequestNumber ='TIA/140/24'
-select * from KGACPACIQueue order by 1 desc
+https://eservicesui.kgac.gov.kw/BP/#/pages/services/re-new-import-license
