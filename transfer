@@ -1,15 +1,21 @@
-    string orgId = string.Empty;
-    if(string.IsNullOrEmpty(userId))
+public async Task<string> GetLicenseValue(Int64 organizationId, int serviceId)
+{
+    string licenseNo = string.Empty;
+    if (serviceId == (int)ServiceTypesEnum.ImportLicenseRenewalRequest)
     {
-        return orgId;
+        licenseNo = _IeServicesUnitOfWork.OrganizationsRepository.Get(a => a.OrganizationId == organizationId)
+            .Select(a=>a.ImporterLicenseNo).FirstOrDefault();
+
     }
-    var x = _IeServicesUnitOfWork.MobileUserOrgMapRepository
-    .Join(_IeServicesUnitOfWork.UserRepository,
-        a => new { a.UserId, a.ParentOrgTradeLicence },
-        b => new { b.UserId, b.LicenseNumber },
-        (a, b) => new { a, b })
-    .Where(x => x.a.IsActive && x.a.UserId == userId)
-    .OrderByDescending(x => x.a.MobileUserOrgMapId)
-    .Select(x => x.a.OrganizationId)
-    .FirstOrDefault();
+    else if(serviceId == (int)ServiceTypesEnum.IndustrialLicenseRenewalRequest)
+    {
+        licenseNo = _IeServicesUnitOfWork.OrganizationsRepository.Get(a => a.OrganizationId == organizationId)
+           .Select(a => a.IndustrialLicenseNo).FirstOrDefault();
+    }
+    else if (serviceId == (int)ServiceTypesEnum.CommercialLicenseRenewalRequest)
+    {
+        licenseNo = _IeServicesUnitOfWork.OrganizationsRepository.Get(a => a.OrganizationId == organizationId)
+           .Select(a => a.CommercialLicenseNo).FirstOrDefault();
+    }
+    return licenseNo;
 }
