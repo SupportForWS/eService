@@ -1,1 +1,11 @@
+
                 var orgid = organizationService.GetOrganizationId(userId);
+                if(orgid == null) 
+                {
+                    response.ResponseS.IsSuccess = false;
+                    response.ResponseS.Message = "Something wentworng";
+                    response.ResponseS.Result = null;
+                    return response;
+                }
+
+                string licenseNo = organizationService.GetLicenseValue(orgid,(int)ServiceTypesEnum.ImportLicenseRenewalRequest);
