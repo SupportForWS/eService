@@ -1,0 +1,5 @@
+ALTER TABLE etrade.eservicerequestsdetails
+ADD CreatedBySahel bit,
+ SahelToken VARCHAR(255),
+ KMIDToken VARCHAR(255),
+ SelectedAuthorizer VARCHAR(255);
