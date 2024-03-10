@@ -1,11 +1,14 @@
 
-                var orgid = organizationService.GetOrganizationId(userId);
-                if(orgid == null) 
-                {
-                    response.ResponseS.IsSuccess = false;
-                    response.ResponseS.Message = "Something wentworng";
-                    response.ResponseS.Result = null;
-                    return response;
-                }
-
-                string licenseNo = organizationService.GetLicenseValue(orgid,(int)ServiceTypesEnum.ImportLicenseRenewalRequest);
+                                var checkCommecrialLic = await domainServices.CheckCommercialLic(_UserOrganizationId, LD.CommercialLicenceNumber);
+                                if(checkCommecrialLic == CheckCommercialLicenseResultEnum.WrongOrganizationId)
+                                {
+                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.SomethingWentWrong]);
+                                }
+                                else if (checkCommecrialLic == CheckCommercialLicenseResultEnum.CommercialLicNotRetreived)
+                                {
+                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.CommercialLicNotRetreived]);
+                                }
+                                else if (checkCommecrialLic == CheckCommercialLicenseResultEnum.CommecrcialLicChanged)
+                                {
+                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.CommecrcialLicChanged]);
+                                }
