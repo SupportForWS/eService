@@ -3,3 +3,11 @@ ADD CreatedBySahel bit null,
  SahelToken VARCHAR(50) null,
  KMIDToken VARCHAR(50) null,
  SelectedAuthorizer VARCHAR(50) null;
+
+CREATE TABLE etrade.SahelNotficationDetailsFromEservice (
+    Id INT Identity(1,1) Primary Key,
+    CivilID Varchar(20),
+    Serviceid INT,
+    RequestNumber Varchar(50),
+    NotificationExpiryDate DATETIME
+);
