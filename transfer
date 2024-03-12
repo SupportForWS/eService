@@ -1,14 +1,1 @@
-
-                                var checkCommecrialLic = await domainServices.CheckCommercialLic(_UserOrganizationId, LD.CommercialLicenceNumber);
-                                if(checkCommecrialLic == CheckCommercialLicenseResultEnum.WrongOrganizationId)
-                                {
-                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.SomethingWentWrong]);
-                                }
-                                else if (checkCommecrialLic == CheckCommercialLicenseResultEnum.CommercialLicNotRetreived)
-                                {
-                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.CommercialLicNotRetreived]);
-                                }
-                                else if (checkCommecrialLic == CheckCommercialLicenseResultEnum.CommecrcialLicChanged)
-                                {
-                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.CommecrcialLicChanged]);
-                                }
+https://localhost:7298/api/v1/SahelIntegratioOrganizationServicesCommands/verify-sahel-redirection
