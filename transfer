@@ -1,1 +1,2 @@
-https://localhost:7298/api/v1/SahelIntegratioOrganizationServicesCommands/verify-sahel-redirection
+    "RenewImportLicUrl": "http://localhost:4200//#/pages/services/re-new-import-license?requestNo={0}&SahelToken={1}",
+    "SahelVerifyNotficationUrl": "http://localhost:4200/#/Sahelnotification/verify?secure1={0}&secure2={1}"
