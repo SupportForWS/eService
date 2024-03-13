@@ -1,15 +1,18 @@
- SahelTokensGenerator tokens = new SahelTokensGenerator();
- var createdTokens = await _ieServicesUnitOfWork.ServiceRequestsDetailRepository.Get(a => !string.IsNullOrEmpty(a.SahelToken1) && !string.IsNullOrEmpty(a.SahelToken2))
-     .Select(a => new SahelTokensGenerator
-     {
-         Token1 = a.SahelToken1,
-         Token2 = a.SahelToken2
-     })
-     .ToListAsync();
- while(true)
- {
-     tokens.Token1 = eServicesV2.Kernel.Service.ServiceRequestServices.ServiceRequestService.fnGenerateToken();
-     tokens.Token2 = eServicesV2.Kernel.Service.ServiceRequestServices.ServiceRequestService.fnGenerateToken();
-     
-     
- }
+SahelTokensGenerator tokens = new SahelTokensGenerator();
+var createdTokens = await _ieServicesUnitOfWork.ServiceRequestsDetailRepository.Get(a => !string.IsNullOrEmpty(a.SahelToken1) && !string.IsNullOrEmpty(a.SahelToken2))
+    .Select(a => new SahelTokensGenerator
+    {
+        Token1 = a.SahelToken1,
+        Token2 = a.SahelToken2
+    })
+    .ToListAsync();
+while(true)
+{
+    tokens.Token1 = eServicesV2.Kernel.Service.ServiceRequestServices.ServiceRequestService.fnGenerateToken();
+    tokens.Token2 = eServicesV2.Kernel.Service.ServiceRequestServices.ServiceRequestService.fnGenerateToken();
+    bool tokensNotExist = !createdTokens.Any(t => t.Token1 == tokens.Token1 && t.Token2 == tokens.Token2);
+    if (tokensNotExist)
+        break;
+
+
+}
