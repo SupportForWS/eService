@@ -1,5 +1,1 @@
-  public class AuthorizedSignatoryModel
-  {
-      public string CivilId { get; set; }
-      public string AuthorizedSignatoryName { get; set; }
-  }
+api/v1/OrganizationRequestQuery/get-list-of-authorized-signatories
