@@ -3,3 +3,6 @@ add  SahelToken1 VARCHAR(50) null,
  SahelToken2 VARCHAR(50) null
  ALTER TABLE etrade.eservicerequestsdetails
 DROP COLUMN SahelToken
+
+truncate table etrade.SahelNotficationDetailsFromEservice;
+ALTER TABLE etrade.SahelNotficationDetailsFromEservice add  EserviceRequestId bigint;
