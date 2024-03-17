@@ -1,1 +1,1 @@
-            _localization = JsonConvert.DeserializeObject<List<JsonLocalization>>(File.ReadAllText(@"Resources/localization.json"));
+builder.Services.AddScoped<IDomainServices, DomainServices>();
