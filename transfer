@@ -1,1 +1,3 @@
-InvalidOperationException: Unable to resolve service for type 'eServicesV2.Kernel.DomainService.IdentityServices.IdentityService' while attempting to activate 'eServicesV2.Kernel.ApplicationService.OrganizationServices.ApplicationOrganizationServices'.
+Exception thrown: 'System.AggregateException' in Microsoft.Extensions.DependencyInjection.dll
+An unhandled exception of type 'System.AggregateException' occurred in Microsoft.Extensions.DependencyInjection.dll
+Some services are not able to be constructed
