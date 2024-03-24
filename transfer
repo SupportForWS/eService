@@ -1,1 +1,3 @@
-                                DefaultValue = LD.IssueDate.HasValue?Convert.ToDateTime(LD.IssueDate).ToString("yyyy-MM-dd"):string.Empty,
+add new import license => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403761233001&Token2=9242403990688006
+renew commercial => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403561375006&Token2=9242403596466007
+renew industrial license => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403193982012&Token2=9242403116216009
