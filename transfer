@@ -1,2 +1,1 @@
-
-http://localhost:4200/#/Sahelnotification/verify?Token1=9242403761233001&Token2=9242403990688006
+                                DefaultValue = LD.IssueDate.HasValue?Convert.ToDateTime(LD.IssueDate).ToString("yyyy-MM-dd"):string.Empty,
