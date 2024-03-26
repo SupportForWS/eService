@@ -1,1 +1,2 @@
-                                Id = "OrganizationArabicName" + "-" + request._addNewImportLicenseRequest.StepNumber,
+     public string OrganizationArabicName { get; set; }
+     public string OrganizationEnglishName { get; set; }
