@@ -1,3 +1,40 @@
-add new import license => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403761233001&Token2=9242403990688006
-renew commercial => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403561375006&Token2=9242403596466007
-renew industrial license => http://localhost:4200/#/Sahelnotification/verify?Token1=9242403193982012&Token2=9242403116216009
+ if(serviceId == (int)ServiceTypesEnum.ImportLicenseRenewalRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.RenewImportLicUrl;
+ }
+ else if(serviceId == (int)ServiceTypesEnum.NewImportLicenseRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.AddNewImportLicUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.IndustrialLicenseRenewalRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.RenewIndustrialLicUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.CommercialLicenseRenewalRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.RenewCommercialLicUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.AddNewAuthorizedSignatoryRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.AddNewAuthorizedSignatoryUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.RemoveAuthorizedSignatoryRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.RemoveAuthorizedSignatoryUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.RenewAuthorizedSignatoryRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.RenewAuthorizedSignatoryUrl;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.OrgNameChangeReqServiceId)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.OrgNameChangeReqServiceId;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.ConsigneeUndertakingRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.ConsigneeUndertakingRequest;
+ }
+ else if (serviceId == (int)ServiceTypesEnum.ChangeCommercialAddressRequest)
+ {
+     serviceUrl = _Configurations.SahelRedirectUrls.ChangeCommercialAddressRequest;
+ }
