@@ -1,1 +1,1 @@
-            _accountMangementLocalization = JsonConvert.DeserializeObject<List<JsonLocalization>>(File.ReadAllText(path+@"Resources/Localization.AccountManagement.json"));
+http://localhost:4200/#/Sahelnotification/verify?Token1=9282403708636010&Token2=9282403245869003
