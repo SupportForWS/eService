@@ -1,174 +1,337 @@
 using eServices.APIs.UserApp.Application.AppSettingsConfigurations;
 using eServices.APIs.UserApp.Application.Infrastructure.Localization;
+using eServices.APIs.UserApp.Application.Resources;
+using eServices.APIs.UserApp.OldApplication;
+using eServices.APIs.UserApp.OldApplication.Models;
+using eServicesV2.Kernel.Core;
+using eServicesV2.Kernel.Domain.Entities.IndividualAuthorizationEntities;
+using eServicesV2.Kernel.Domain.Enums;
 using eServicesV2.Kernel.Repository.Base;
 using eServicesV2.Kernel.Service.SahelIntegrationForIndividualAuth;
+using eServicesV2.Kernel.Service.ServiceRequestServices;
 using FluentValidation;
+using Hangfire.Storage;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.ReportingServices.Interfaces;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Unicode;
+using static eServices.APIs.UserApp.Application.Features.V1.Queries.IndividualAuthorizationQueries.PrintIndividualFormQuery;
 using static eServicesV2.Kernel.Core.Configurations.SahelIntegrationModels;
+using Notification = eServicesV2.Kernel.Core.Configurations.SahelIntegrationModels.Notification;
 
-namespace eServices.APIs.UserApp.Application.Features.V1.Queries.IndividualAuthorizationQueries
+namespace eServices.APIs.UserApp.Application.Features.V1.Commands.IndividualAuthorizationCommands
 {
-    public class InitiateeIndividualAuthorizationRequestForSahelQuery : IRequest<ResponseS>
+    public class GetAllIndividualRequestsForSahelCommand : IRequest<ResponseSWithNotification>
     {
         private readonly string _civilId;
+        private readonly int _stepNo;
+        private readonly object _inputModel;
         #region CTOR
-        public InitiateeIndividualAuthorizationRequestForSahelQuery(string civilId)
+        public GetAllIndividualRequestsForSahelCommand(string civilId, int stepNo, object InputItemModels)
         {
             _civilId = civilId;
+            _inputModel = InputItemModels;
+            _stepNo = stepNo;
         }
         #endregion
 
         #region Handler
-        public class InitiateeIndividualAuthorizationRequestForSahelQueryHandler : BaseQueryHandler, IRequestHandler<InitiateeIndividualAuthorizationRequestForSahelQuery, ResponseS>
+        public class GetAllIndividualRequestsForSahelCommandHandler : BaseCommandHandler, IRequestHandler<GetAllIndividualRequestsForSahelCommand, ResponseSWithNotification>
         {
-            private readonly ISahelIntegrationIAService _sahelIntegrationServie;
-            private readonly IeServicesUnitOfWork _ieServicesUnitOfWork;
-            public InitiateeIndividualAuthorizationRequestForSahelQueryHandler(IValidatorFactory validatorFactory, IHttpContextAccessor httpContextAccessor,
-                IUserAppStringLocalizer localizer,
-                IHostingEnvironment hostingEnvironment,
-                IUserAppConfigurations configurations,
-                 ISahelIntegrationIAService sahelIntegrationServie,
-                IeServicesUnitOfWork ieServicesUnitOfWork = null)
-                : base(validatorFactory, httpContextAccessor,
-                      localizer, hostingEnvironment, configurations,
-                      ieServicesUnitOfWork)
-            {
-                _ieServicesUnitOfWork = ieServicesUnitOfWork;
-                _sahelIntegrationServie = sahelIntegrationServie;
+            private readonly IServiceRequestService _serviceRequestService;
 
+            private readonly ISahelIntegrationIAService _sahelIntegrationIAService;
+            public GetAllIndividualRequestsForSahelCommandHandler(IMediator mediator, IValidatorFactory validatorFactory, IHttpContextAccessor httpContextAccessor,
+                IUserAppStringLocalizer localizer, IHostingEnvironment hostingEnvironment, IUserAppConfigurations configurations, IServiceRequestService serviceRequestService,
+                ISahelIntegrationIAService sahelIntegrationIAService, IeServicesUnitOfWork ieServicesUnitOfWork = null) :
+                base(validatorFactory, httpContextAccessor, localizer, hostingEnvironment, configurations, ieServicesUnitOfWork)
+            {
+                _sahelIntegrationIAService = sahelIntegrationIAService;
+                _serviceRequestService= serviceRequestService;
             }
-            public async Task<ResponseS> Handle(InitiateeIndividualAuthorizationRequestForSahelQuery request, CancellationToken cancellationToken)
+            public async Task<ResponseSWithNotification> Handle(GetAllIndividualRequestsForSahelCommand request, CancellationToken cancellationToken)
             {
-                //await _sahelIntegrationServie.CheckIndividualAuthorizationPendingRequests();
-                ResponseS response = new ResponseS() { IsSuccess = true, Message = "" };
-                response.Result = new Result()
+                ResponseSWithNotification response = new();
+                response.ResponseS = new ResponseS();
+                response.NotificationData = new NotificationData() { Notification = new Notification() };
+                if (String.IsNullOrEmpty(request._civilId))
                 {
-                    NameAr = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameAr,
-                    NameEn = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameEn,
-                    HintAr = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthorizationServiceHintAr,
-                    HintEn = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthorizationServiceHintEn,
-                    StepNo = 0,
-                    TOS = null
+                    response.ResponseS.IsSuccess = false;
+                    response.ResponseS.Message = "يجب إرسال الرقم المدني";
+                    return response;
+                }
+                if (request._inputModel == null)
+                {
+                    response.ResponseS.IsSuccess = false;
+                    response.ResponseS.Message = _Localizer[Resources.ResourcesEnum.SomethingWentWrong];
+                    return response;
+                }
+                /*                List<InputItemModels> InputItemmodels = new List<InputItemModels>();
+                                InputItemmodels.Add(
+                                    new InputItemModels
+                                    {
+                                        Type = "0",
+                                        Key = "IndividualAuthRequestNo",
+                                        Value = "RgDDNF8qPrggCSMsCYi1mA%3D%3D",
+                                        Extension = ""
+                                    });
+                                string inputModelString = JsonConvert.SerializeObject(InputItemmodels).Replace("{{", "{").Replace("}}", "}");*/
+
+                string inputModelString = request._inputModel.ToString()
+                    .Replace("{{", "{").Replace("}}", "}");
+
+
+                if (string.IsNullOrEmpty(inputModelString))
+                {
+                    response.ResponseS.IsSuccess = false;
+                    response.ResponseS.Message = _Configurations.IndividualAuthorizationSahelConfiguration.SomethingWentWrongAr;
+                    return response;
+                }
+
+                JArray jsonArray = JArray.Parse(inputModelString);
+                Dictionary<string, string> formValues = new Dictionary<string, string>();
+
+                foreach (JObject jObject in jsonArray)
+                {
+                    /*                    formValues.Add(jObject.GetValue("key").ToString(),
+                                            jObject.GetValue("value").ToString());
+                    */
+                    string key = jObject.GetValue("Key")?.ToString() ?? jObject.GetValue("key")?.ToString();
+                    string value = jObject.GetValue("Value")?.ToString() ?? jObject.GetValue("value")?.ToString();
+
+                    if (key != null && value != null)
+                    {
+                        formValues.Add(key, value);
+                    }
+                }
+                string civilID = request._civilId;
+                string individualAuthRequestNo = string.Empty;
+
+
+                foreach (KeyValuePair<string, string> formItem in formValues)
+                {
+                    if (formItem.Key.Contains("IndividualAuthRequestNo"))
+                    {
+                        individualAuthRequestNo = formItem.Value.ToString();
+                    }
+                }
+                var reqId = CommonFunctions.CsUploadDecrypt(individualAuthRequestNo);
+                LogData data = new LogData()
+                {
+                    CivilId = civilID,
+                    LogType = "Information",
+                    Message = "Call Inquiry individual Authorization Service",
+                    Parameter1 = "Request Id ",
+                    Parameter1Value = reqId,
+                    ServiceNameAra = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameAr,//config["VehicleAuthorizationInquiryServiceNameAra"],
+                    ServiceNameEng = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameEn //config["VehicleAuthorizationInquiryServiceNameEng"],
                 };
+                MobileDataBase.SaveSahelLog(data);
+                if (!string.IsNullOrEmpty(individualAuthRequestNo))
+                {
+                    string requestId = CommonFunctions.CsUploadDecrypt(individualAuthRequestNo);
+                    long requestID = Convert.ToInt64(requestId);
+                    var individualAuthRequest = await _IeServicesUnitOfWork.IndividualAuthorizationRequestsRepository.Get()
+                        .Where(p => p.Id == requestID)
+                        .FirstOrDefaultAsync();
 
-                List<ControlsModels> ControlsModels = new List<ControlsModels>();
 
-                #region AuthorizerCivilId
-                Validator civilIdValidator = new Validator
-                {
-                    MessageAr = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoHintAr,
-                    MessageEn = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoHintEn,
-                    Regex = @"^\d+(\.\d+)*$"
-                };
-                List<Validator> civilIdValidators = new List<Validator>();
-                civilIdValidators.Add(civilIdValidator);
-                ControlsModels.Add(new ControlsModels
-                {
-                    Id = "AuthorizerCivilId",
-                    Type = "Text",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoLabelAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoLabelEn,
-                    HintAr = null,
-                    HintEn = null,
-                    MaxLength = _Configurations.IndividualAuthorizationSahelConfiguration.CivilIdMaxLength,
-                    IsRequired = true,
-                    OptionControlModels = null,
-                    AllowedExtensions = null,
-                    DefaultValue = "",
-                    Validators = civilIdValidators
-                });
+                    if (individualAuthRequest != null)
+                    {
+                        string bodyAr_ = string.Format(_Configurations.IndividualAuthorizationSahelConfiguration.NotificationHeaderForIndividualAuthorizationAr, individualAuthRequest.RequestNumber);
+                        string bodyEn_ = string.Format(_Configurations.IndividualAuthorizationSahelConfiguration.NotificationHeaderForIndividualAuthorizationEn, individualAuthRequest.RequestNumber);
 
-                #endregion AuthorizationPurposes
-                var authorizationPurposesOptionsControlModels = await _sahelIntegrationServie.GetAuthorizationPurposes();
-                ControlsModels.Add(new ControlsModels
-                {
-                    Id = "AuthorizationPurpose",
-                    Type = "Dropdown",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelEn,
-                    HintAr = null,
-                    HintEn = null,
-                    MaxLength = null,
-                    IsRequired = true,
-                    OptionControlModels = authorizationPurposesOptionsControlModels,
-                    AllowedExtensions = null,
-                    DefaultValue = ""
-                });
-                #region ReferenceNumber
-                ControlsModels.Add(new ControlsModels()
-                {
-                    Id = "ReferenceNumber",
-                    Type = "Text",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.ReferenceNumberLabelAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.ReferenceNumberLabelEn,
-                    HintAr = null,
-                    HintEn = null,
-                    MaxLength = null,
-                    IsRequired = true,
-                    OptionControlModels = null,
-                    AllowedExtensions = "",
-                    DefaultValue = "",
-                    Validators = null
-                });
-                #endregion ports
-                var portsOptionControlModels = await _sahelIntegrationServie.GetAllIndividualPorts();
-                ControlsModels.Add(new ControlsModels()
-                {
-                    Id = "Port",
-                    Type = "Dropdown",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortLabelAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortLabelEn,
-                    HintAr = null,
-                    HintEn = null,
-                    MaxLength = null,
-                    IsRequired = true,
-                    OptionControlModels = portsOptionControlModels,
-                    AllowedExtensions = null,
-                    DefaultValue = ""
-                });
-                #region portOperators
-                var operatorsOptionControlModels = await _sahelIntegrationServie.GetAllIndividualPortsOperator();
-                ControlsModels.Add(new ControlsModels()
-                {
-                    Id = "PortOperators",
-                    Type = "Dropdown",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortOperatorLabelAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortOperatorLabelEn,
-                    HintAr = "يرجى الاختيار في حال تم اختيار المستودعات الجمركية",
-                    HintEn = "please select in case of choosing customs warehouses adminstartion",
-                    MaxLength = null,
-                    IsRequired = false,
-                    OptionControlModels = operatorsOptionControlModels,
-                    AllowedExtensions = null,
-                    DefaultValue = ""
-                });
-                #endregion
-                #region Agreement
-                ControlsModels.Add(new ControlsModels()
-                {
-                    Id = "Agreement",
-                    Type = "Checkbox",
-                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.IndividualAuthAgrrementAr,
-                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.IndividualAuthAgrrementEn,
-                    HintAr = null,
-                    HintEn = null,
-                    MaxLength = null,
-                    IsRequired = true,
-                    AllowedExtensions = null,
-                    DefaultValue = ""
-                });
-                #endregion
-                #region
-                #endregion
-                response.Result.ControlsModels = ControlsModels;
+                        var purpose = await _IeServicesUnitOfWork.IndividualAuthReferenceTypesRepository.Get()
+                            .Where(p => p.Id == individualAuthRequest.PurposeId).FirstOrDefaultAsync();
+
+                        Dictionary<string, string> notificationDatatableAr = new Dictionary<string, string>();
+                        Dictionary<string, string> notificationDatatableEn = new Dictionary<string, string>();
+
+                        notificationDatatableAr.Add(_Localizer.GetValueByLang(ResourcesEnum.RequestNumber, "ar"), individualAuthRequest.RequestNumber);
+                        notificationDatatableEn.Add(_Localizer.GetValueByLang(ResourcesEnum.RequestNumber, "en"), individualAuthRequest.RequestNumber);
+
+                        notificationDatatableAr.Add(_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.RequesterCivilIdHintAr, individualAuthRequest.RequesterCivilId);
+                        notificationDatatableEn.Add(_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.RequesterCivilIdHintEn, individualAuthRequest.RequesterCivilId);
+
+                        notificationDatatableAr.Add(_Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoLabelAr, individualAuthRequest.AuthorizerCivilId);
+                        notificationDatatableEn.Add(_Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.AuthorizerCivilIdNoLabelEn, individualAuthRequest.AuthorizerCivilId);
+
+                        notificationDatatableAr.Add(_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelAr, purpose != null ? purpose.ArabicName : " ");
+                        notificationDatatableEn.Add(_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelEn, purpose != null ? purpose.EnglishName : " ");
+
+                        notificationDatatableAr.Add(_Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortLabelAr, individualAuthRequest.PortNameArabic);
+                        notificationDatatableEn.Add(_Configurations.IndividualAuthorizationSahelConfiguration.NewRequestService.PortLabelEn, individualAuthRequest.PortNameEnglish);
+
+                        notificationDatatableAr.Add(_Configurations.IndividualAuthorizationSahelConfiguration.ReferenceNumberLabelAr, individualAuthRequest.ReferenceType);
+                        notificationDatatableEn.Add(_Configurations.IndividualAuthorizationSahelConfiguration.ReferenceNumberLabelEn, individualAuthRequest.ReferenceType);
+
+                        notificationDatatableAr.Add("تاريخ الإصدار", individualAuthRequest.SubmissionDate.ToString("yyyy-MM-dd"));
+                        notificationDatatableEn.Add("Issuance date", individualAuthRequest.SubmissionDate.ToString("yyyy-MM-dd"));
+
+                        notificationDatatableAr.Add("تاريخ الإنتهاء", individualAuthRequest.ExpiryDate.ToString("yyyy-MM-dd"));
+                        notificationDatatableEn.Add("Expiry date", individualAuthRequest.ExpiryDate.ToString("yyyy-MM-dd"));
+
+/*                        var stringBuilder = new StringBuilder();
+                        stringBuilder.AppendLine("معلومات طلب التفويض")
+                            .AppendLine()
+                            .AppendLine("رقم البطاقة المدنية لمقدم الطلب (المفوض) :")
+                            .AppendLine(individualAuthRequest.RequesterCivilId)
+                            .AppendLine()
+                            .AppendLine("رقم البطاقة المدنية للمفوض له :")
+                            .AppendLine(individualAuthRequest.AuthorizerCivilId)
+                            .AppendLine()
+                            .AppendLine("الغرض من التفويض :")
+                            .AppendLine(purpose != null ? purpose.ArabicName : " ")
+                            .AppendLine()
+                            .AppendLine("المنفذ" +": "+ individualAuthRequest.PortNameArabic)
+                            .AppendLine()
+                            .AppendLine("الرقم المرجعي :" + individualAuthRequest.ReferenceType)
+                            .AppendLine()
+                            .AppendLine("تاريخ الإصدار:" + individualAuthRequest.SubmissionDate.ToString("yyyy-MM-dd"))
+                            .AppendLine()
+                            .AppendLine("تاريخ الإنتهاء:" + individualAuthRequest.ExpiryDate.ToString("yyyy-MM-dd"));
+
+                        bodyAr_ = stringBuilder.ToString();
+                        bodyEn_ = "";*/
+
+                        Notification notification = new Notification()
+                        {
+                            bodyAr = bodyAr_,
+                            bodyEn = bodyEn_,
+
+                            dataTableAr = notificationDatatableAr,
+                            dataTableEn = notificationDatatableEn,
+                            isForSubscriber = "true",
+                            subscriberCivilId = request._civilId,
+                            notificationType = ((int)SahelNotficationTypesEnum.IndividualAuthorizationSearch).ToString(),
+                            //actionButtonRequestList = actionButtons,
+                        };
+                        List<actionButtonRequestList> actionButtons = new List<actionButtonRequestList>();
+                        if (individualAuthRequest.StateId == (int)IndividualAuthorizationStatusEnum.Approved)
+                        {
+                            string encRequestId = CommonFunctions.CsUploadEncrypt(individualAuthRequest.Id.ToString());
+
+/*                            actionButtonRequestList actionButtonRequest =
+                                new actionButtonRequestList()
+                                {
+                                    actionType = "Cancel",
+                                    actionUrl = _Configurations.IndividualAuthorizationSahelConfiguration.eServicesURL + "delete-individual-authorization-request-for-sahel?requestId=" + encRequestId,
+                                    LabelAr = "إلغاء",
+                                    LabelEn = "cancel"
+                                };
+                            actionButtons.Add(actionButtonRequest);*/
+                            string printingUrl = await PrepareDownloadLink(individualAuthRequest);
+                            actionButtonRequestList actionButtonRequest =
+                                    new actionButtonRequestList()
+                                    {
+                                        actionType = "details",
+                                        //actionUrl=_Configurations.IndividualAuthorizationSahelConfiguration.PrintIndividualAuthURL+ encRequestId,
+                                        actionUrl = printingUrl,
+                                        LabelAr = "تحميل",
+                                        LabelEn = "details"
+                                    };
+                            /*                            actionButtons.Add(new actionButtonRequestList
+                                                        {
+                                                            actionType= "details",
+                                                            //actionUrl=_Configurations.IndividualAuthorizationSahelConfiguration.PrintIndividualAuthURL+ encRequestId,
+                                                            actionUrl= printingUrl,
+                                                            LabelAr="تفاصيل",
+                                                            LabelEn="details"
+                                                        });*/
+                            actionButtons.Add(actionButtonRequest);
+                            notification.actionButtonRequestList = actionButtons;
+                        }
+                        if (individualAuthRequest.StateId == (int)IndividualAuthorizationStatusEnum.NotCompleted)
+                        {
+                            string encRequestId = CommonFunctions.CsUploadEncrypt(individualAuthRequest.Id.ToString());
+                            actionButtonRequestList actionButtonRequest =
+                                new actionButtonRequestList()
+                                {
+                                    actionType = "Delete",
+                                    actionUrl = _Configurations.IndividualAuthorizationSahelConfiguration.eServicesURL + "cancel-individual-authorization-request-for-sahel?requestId=" + encRequestId,
+                                    LabelAr = "حذف",
+                                    LabelEn = "delete"
+                                };
+                            actionButtons.Add(actionButtonRequest);
+                            notification.actionButtonRequestList = actionButtons;
+                        }
+                        response.ResponseS.Result = null;
+                        response.ResponseS.IsSuccess = true;
+                        response.ResponseS.Message = notification.bodyAr;
+                        response.NotificationData.Notification = notification;
+                        response.NotificationData.RequesterCivilId = request._civilId;
+                        return response;
+
+
+                    }
+                    else
+                    {
+                        response.ResponseS.Result = null;
+                        response.ResponseS.IsSuccess = false;
+                        response.ResponseS.Message = "لم يتم العثور على الطلب";
+                    }
+                }
+
+
+
                 return response;
-
-
             }
+            private async Task<string> PrepareDownloadLink(IndividualAuthorizationRequest data)
+            {
+                QRCodeReportDataModel jsonData = new QRCodeReportDataModel();
+                List<ParameterHeaderModel> parameterHeaderModel = new List<ParameterHeaderModel>();
+                List<ParameterModel> parameterModel = new List<ParameterModel>();
 
+                    var requesterPersolnalData = await _IeServicesUnitOfWork.KGACPACIPersonIdentity.Get()
+                      .Where(p => p.KgacpaciqueueId == Convert.ToInt32(data.RequesterToken))
+                      .FirstOrDefaultAsync();
+
+                parameterModel.Add(new ParameterModel
+                {
+                    Key = "RequestId",
+                    Value = data.Id.ToString()
+                });
+                parameterModel.Add(new ParameterModel
+                {
+                    Key = "PrintedBy",
+                    Value = requesterPersolnalData.FullNameAr
+                });
+
+                parameterHeaderModel.Add(new ParameterHeaderModel
+                {
+                    ReferenceId = data.Id.ToString(),
+                    ReferenceNumber = data.RequestNumber,
+                    Parameter = parameterModel
+                });
+                DateTime? issuedDate = data.SubmissionDate;
+                string x = issuedDate.ToString("O");
+                jsonData.QRReportConfigId = _Configurations.IndividualAuthorizationConfiguration.QRReportConfigId;
+                jsonData.ReferenceType = _Configurations.IndividualAuthorizationConfiguration.ReferenceType;
+                jsonData.IssuedToUser = requesterPersolnalData.FullNameAr;
+                jsonData.IssuedDate = x;
+                jsonData.OwnerOrgId = "0";
+                jsonData.OwnerLocId = data.PortId.ToString();
+                jsonData.Parameters = parameterHeaderModel;
+
+                string json = System.Text.Json.JsonSerializer.Serialize(jsonData, new JsonSerializerOptions
+                {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(UnicodeRanges.All)
+                });
+
+                var QrTokens = await _serviceRequestService.QRCodeTokenGenerator(json, data.RequesterCivilId);
+                var url = string.Format(_Configurations.IndividualAuthorizationConfiguration.IndividualQRReportUrl, QrTokens.Token_1, QrTokens.Token_2);
+                return url;
+            }
         }
+        #endregion
+        #region DTos
+
         #endregion
     }
 }
