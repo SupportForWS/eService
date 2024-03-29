@@ -1,1 +1,201 @@
-http://localhost:4200/#/Sahelnotification/verify?Token1=9282403708636010&Token2=9282403245869003
+using eServices.APIs.UserApp.Application.AppSettingsConfigurations;
+using eServices.APIs.UserApp.Application.Infrastructure.Localization;
+using eServicesV2.Kernel.Repository.Base;
+using FluentValidation;
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using eServicesV2.Kernel.Core.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using static eServicesV2.Kernel.Core.Configurations.SahelIntegrationModels;
+using eServices.APIs.UserApp.OldApplication.Models;
+using eServicesV2.Kernel.Core.Enums;
+using eServicesV2.Kernel.Core.Extentions;
+using Result = eServicesV2.Kernel.Core.Configurations.SahelIntegrationModels.Result;
+using eServicesV2.Kernel.Domain.Enums;
+using static eServicesV2.Kernel.Core.Constants.LoggingConstants;
+
+namespace eServices.APIs.UserApp.Application.Features.V1.Queries.IndividualAuthorizationQueries
+{
+    public class GetAllIndividualRequestsForSahelQuery : IRequest<ResponseS>
+    {
+        private readonly string _civilId;
+        #region CTOR
+        public GetAllIndividualRequestsForSahelQuery(string civilId)
+        {
+            _civilId = civilId;
+        }
+        #endregion
+
+        #region Handler
+        public class GetAllIndividualRequestsForSahelQueryHandler : BaseQueryHandler, IRequestHandler<GetAllIndividualRequestsForSahelQuery, ResponseS>
+        {
+            public GetAllIndividualRequestsForSahelQueryHandler(IValidatorFactory validatorFactory, IHttpContextAccessor httpContextAccessor,
+                IUserAppStringLocalizer localizer,
+                IHostingEnvironment hostingEnvironment,
+                IUserAppConfigurations configurations,
+                IeServicesUnitOfWork ieServicesUnitOfWork = null)
+                : base(validatorFactory, httpContextAccessor,
+                      localizer, hostingEnvironment, configurations,
+                      ieServicesUnitOfWork)
+            {
+            }
+            public async Task<ResponseS> Handle(GetAllIndividualRequestsForSahelQuery request, CancellationToken cancellationToken)
+            {
+                ResponseS response = new ResponseS() { IsSuccess = true, Message = "" };
+                response.Result = new Result()
+                {
+                    NameAr = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameAr,
+                    NameEn = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthServiceNameEn,
+                    HintAr = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthorizationServiceHintAr,
+                    HintEn = _Configurations.IndividualAuthorizationSahelConfiguration.IndividualAuthorizationServiceHintEn,
+                    StepNo = 0,
+                    TOS = null
+                };
+
+
+                List<ControlsModels> ControlsModels = new List<ControlsModels>();
+
+
+
+                var requestsDetails = await _IeServicesUnitOfWork.IndividualAuthorizationRequestsRepository.Get().Include(p => p.Status)
+                    .Where(p => p.RequesterCivilId == request._civilId && p.IsActive && (p.StateId == (int)IndividualAuthorizationStatusEnum.Approved || p.StateId == (int)IndividualAuthorizationStatusEnum.Expired) && p.RequestNumber != null)
+                    .Select(p => new requestDetailsDTO
+                    {
+                        TextAr = $"{p.RequestNumber}" + "\u000A" + "\u200f" + $"{p.Status.ValueArabic}",
+                        TextEn = p.RequestNumber,
+                        Value = CommonFunctions.CsUploadEncrypt(p.Id.ToString())
+                    }).ToListAsync();
+
+                requestsDetails.ForEach(r => r.Requestnumber = Convert.ToInt32(r.TextEn.Split("/")[1]));
+                requestsDetails=requestsDetails.OrderByDescending(r => r.Requestnumber).ToList();
+                List<OptionControlModels> requests=requestsDetails
+                    .Select(r=>new OptionControlModels { TextAr=r.TextAr,TextEn=r.TextEn,Value=r.Value}).ToList();
+                List<OptionControlModels> VehicleAutorizationRequests = new List<OptionControlModels>();
+                VehicleAutorizationRequests.AddRange(requests);
+
+                ControlsModels.Add(new ControlsModels()
+                {
+                    Id = "IndividualAuthRequestNo",
+                    Type = "Dropdown",
+                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.RequestNumberAr,
+                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.RequestNumberEn,
+                    HintAr = _Configurations.IndividualAuthorizationSahelConfiguration.RequestNumberAr,
+                    HintEn = _Configurations.IndividualAuthorizationSahelConfiguration.RequestNumberEn,
+                    MaxLength = null,
+                    IsRequired = true,
+                    OptionControlModels = VehicleAutorizationRequests,
+                    AllowedExtensions = null,
+                    DefaultValue = ""
+                });
+                response.Result.ControlsModels = ControlsModels;
+
+                /*                #region requesterCivilId
+                                List<Validator> civilIdValidators = new List<Validator>();
+
+                                Validator civilIdValidator = new Validator
+                                {
+                                    MessageAr =_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.RequesterCivilIdHintAr,
+                                    MessageEn = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.RequesterCivilIdHintEn,
+                                    //Regex = @"^\d+(\.\d+)*$"
+                                    Regex = @"^(1|2|3)((\\d{2}((0[13578]|1[02])(0[1-9]|[12]\\d|3[01])|(0[13456789]|1[012])(0[1-9]|[12]\\d|30)|02(0[1-9]|1\\d|2[0-8])))|([02468][048]|[13579][26])0229)(\\d{5})$"
+                                };
+                                civilIdValidators.Add(civilIdValidator);
+
+                                #endregion
+
+                                #region Validity- All, valid , invalid
+
+                                List<OptionControlModels> ValidityControlsModels =new List<OptionControlModels>();
+                                OptionControlModels all = new OptionControlModels { TextAr = "الكل", TextEn = "All",Value= null};
+                                OptionControlModels valid = new OptionControlModels { TextAr = "فعال", TextEn = "Valid",Value=true.ToString() };
+                                OptionControlModels invalid = new OptionControlModels { TextAr = "غير فعال", TextEn = "Invalid",Value=false.ToString() };
+                                ValidityControlsModels.AddRange(new OptionControlModels[] {all,valid,invalid });
+
+                                ControlsModels.Add(new ControlsModels()
+                                {
+                                    Id="Validity",
+                                    Type="Dropdown",
+                                    LabelAr=_Configurations.IndividualAuthorizationSahelConfiguration.SearchService.ValidityLabelAr,
+                                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.ValidityLabelEn,
+                                    HintAr="",
+                                    HintEn="",
+                                    MaxLength="",
+                                    IsRequired=false,
+                                    OptionControlModels= ValidityControlsModels,
+                                    AllowedExtensions=null,
+                                    DefaultValue=""
+                                } );
+                                #endregion
+
+                                #region Authorization Purpose
+
+                                var authorizationPurposes = await _IeServicesUnitOfWork.IndividualAuthReferenceTypesRepository.Get()
+                                    .Where(p => p.Status == "Created")
+                                    .Select(p => new OptionControlModels
+                                    {
+                                        Value=p.Id.ToString(),
+                                        TextEn=p.EnglishName,
+                                        TextAr=p.ArabicName,
+                                    }).ToListAsync();
+
+                                if (authorizationPurposes == null)
+                                {
+                                    throw new BusinessRuleException(_Localizer[Resources.ResourcesEnum.NoDataFound]);
+                                }
+                                List<OptionControlModels> authorizationPurposesControlsModels = new List<OptionControlModels>();
+                                authorizationPurposesControlsModels.AddRange(authorizationPurposes);
+
+                                ControlsModels.Add(new ControlsModels
+                                {
+                                    Id = "AuthorizationPurpose",
+                                    Type = "Dropdown",
+                                    LabelAr = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelAr,
+                                    LabelEn = _Configurations.IndividualAuthorizationSahelConfiguration.SearchService.AuthorizationPurposeLabelEn,
+                                    HintAr = null,
+                                    HintEn = null,
+                                    MaxLength = null,
+                                    IsRequired = false,
+                                    OptionControlModels = authorizationPurposesControlsModels,
+                                    AllowedExtensions = null,
+                                    DefaultValue = ""
+                                });
+                                #endregion
+
+                                #region Reference Number
+                                ControlsModels.Add(new ControlsModels()
+                                {
+                                    Id= "ReferenceNumber",
+                                    Type="Text",
+                                    LabelAr="",
+                                    LabelEn="",
+                                    HintAr="",
+                                    HintEn="",
+                                    MaxLength="",
+                                    IsRequired=false,
+                                    OptionControlModels=null,
+                                    AllowedExtensions="",
+                                    DefaultValue="",
+                                    Validators=null
+                                });
+
+                                #endregion
+                */
+                response.Result.ControlsModels = ControlsModels;
+                return response;
+            }
+        }
+        #endregion
+
+        #region DTOs
+        private class requestDetailsDTO
+        {
+            public string Value { get; set; }
+            public string TextAr { get; set; }
+            public string TextEn { get; set; }
+            public int Requestnumber { get; set; }
+        }
+        #endregion
+
+    }
+}
