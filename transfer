@@ -76,7 +76,7 @@ SELECT @ISADMIN = isnull(ISADMIN,0)
    Case When isnull(OReq.IsMainCompany,'0')='0' then 'false' else 'true' end as "IsMainCompany",    
    OReq.StateId ,   
    
-      ORAWfEN.StateName+'/'+ORAWf.StateName as stateidAra, 
+      ORAWf.StateName+ '/' +ORAWfEN.StateName as stateidAra, 
    Case When     
    OReq.StateId in ('OrganizationRequestForCreateState','OrganizationRequestForUpdateState','OrganizationRequestApprovedForCreate','OrganizationRequestApprovedForUpdate','OrganizationRequestForVisit')    
    Then    
