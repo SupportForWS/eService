@@ -1,2 +1,70 @@
-    string arLang = LanguageEnum.Arabic.GetEnumDescription().ToLower();
-    string enLang = LanguageEnum.English.GetEnumDescription().ToLower();
+{
+  "ResponseS": {
+    "IsSuccess": true,
+    "Message": "",
+    "MessageEn": "",
+    "Result": {
+      "NameAr": ".إضافة طلب ترخيص استيراد جديد",
+      "NameEn": "Add New Import License Request.",
+      "HintAr": ".إضافة طلب ترخيص استيراد جديد",
+      "HintEn": "Add New Import License Request.",
+      "StepNo": 5,
+      "TOS": null,
+      "ButtonLabelAr": "التالي",
+      "ButtonLabelEn": "Next",
+      "ControlsModels": [
+        {
+          "Id": "AuthorizedSignatureForm-4",
+          "Type": "File",
+          "LabelAr": "اعتماد توقيع غرفة التجارة - الجمارك",
+          "LabelEn": "Authorized Signature Form",
+          "HintAr": "",
+          "HintEn": "",
+          "MaxLength": null,
+          "IsRequired": true,
+          "DefaultValue": "",
+          "AllowedExtensions": "pdf",
+          "FirstDate": "",
+          "LastDate": "",
+          "IsMultiline": false,
+          "IsDisabled": false,
+          "OptionControlModels": null,
+          "Validators": null
+        },
+        {
+          "Id": "ImportLicenseFile-4",
+          "Type": "File",
+          "LabelAr": "رخصة الاستيراد",
+          "LabelEn": "Import License",
+          "HintAr": "",
+          "HintEn": "",
+          "MaxLength": null,
+          "IsRequired": true,
+          "DefaultValue": "",
+          "AllowedExtensions": "pdf",
+          "FirstDate": "",
+          "LastDate": "",
+          "IsMultiline": false,
+          "IsDisabled": false,
+          "OptionControlModels": null,
+          "Validators": null
+        }
+      ]
+    },
+    "Actions": null
+  },
+  "NotificationData": {
+    "Notification": {
+      "subscriberCivilId": null,
+      "isForSubscriber": null,
+      "notificationType": null,
+      "bodyAr": null,
+      "bodyEn": null,
+      "dataTableAr": null,
+      "dataTableEn": null,
+      "actionButtonRequestList": null
+    },
+    "RequesterCivilId": null,
+    "AuthorizerCivilId": null
+  }
+}
