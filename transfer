@@ -1,9 +1,10 @@
-  case 5:
-      {
-          ResponseSWithNotification response = new ResponseSWithNotification();
-          response.ResponseS = new ResponseS() { IsSuccess = true, Message= "لقد تم إستلام طلبك" , MessageEn ="We received your request", Result = null };
-          return response;
-      }
+  using (var sCmd = new SqlCommand("[etrade].[sp_GetKMIDVerificationStatus]", sCon))
+  {
+      sCmd.CommandType = CommandType.StoredProcedure;
+      sCmd.Parameters.Add("@csvTokens", SqlDbType.NVarChar).Value = sCSVTokens;
 
-
-  ||  (request.StepNumber == 5);
+      DataSet Ds = new DataSet();
+      SqlDataAdapter da = new SqlDataAdapter(sCmd);
+      da.Fill(Ds);
+      dtResult = Ds.Tables[0];
+  }
