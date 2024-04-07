@@ -1,2 +1,25 @@
-ALTER TABLE etrade.eservicerequests
-ADD RequestSource Varchar(50) null
+ public enum ServiceRequestStatesEnum
+ {
+     EServiceOrganizationRequestCreatedState = 1,
+     EServiceRequestAcceptedState = 2,
+     EServiceRequestCreatedState = 3,
+     EServiceRequestDeletedState = 4,
+     EServiceRequestORGCreatedState = 5,
+     EServiceRequestSubmittedState = 6,
+     EServiceRequestORGForAdditionalInfo= 7,
+     EServiceRequestORGForVisitState=8,
+     EServiceRequestORGReSubmittedState=9,
+     EServiceRequestORGSubmittedState=10,
+     EServiceRequestORGRejectedState=11,
+     EservTranReqInitAcceptedState=12,
+     EservTranReqCreatedState=13,
+     EservTranReqInitSubmittedState=14,
+     EservTranReqInitRejectedState=15,
+     EservTranReqFinalRejectedState=16,
+     EservTranReqCompletedState =17,
+     // EServiceRequestProceedProgressState,
+     EservTranReqProceedState=18,
+     EServiceRequestRejectedState=19
+     //EServiceRequestCompletedState,
+     //EServiceRequestProceedState
+ }
