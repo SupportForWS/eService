@@ -1,27 +1,28 @@
-        public class CreateAddNewImportLicenseDTO
-        {
-            public string RequestNumber { get; set; }
-            public string ImporterLicenseNo { get; set; }
-            public string SelectedAuthorizerCivilId { get; set; }
-            public bool IsFromSahel { get; set; }
+  string[] statusEnums = new string[]
+  {
+          nameof(ServiceRequestStatesEnum.EServiceRequestORGCreatedState),
+           nameof(ServiceRequestStatesEnum.EServiceRequestORGForAdditionalInfo),
+      nameof(ServiceRequestStatesEnum.EServiceRequestORGRejectedState),
+       nameof(ServiceRequestStatesEnum.EServiceRequestCreatedState),
+        nameof(ServiceRequestStatesEnum.EServiceRequestRejectedState),
+  };
+  int[] serviceIds = new int[]
+  {
+      (int)ServiceTypesEnum.NewImportLicenseRequest,
+      (int)ServiceTypesEnum.ImportLicenseRenewalRequest,
+  };
+  List<ServiceRequest>? requestList = await _eServicesContext
+  .Set<ServiceRequest>()
+       .Include(p => p.ServiceRequestsDetail)
+       .Where(p => statusEnums.Contains(p.StateId)
+       &&p.RequestSource == "Sahel"
+       && !string.IsNullOrEmpty(p.ServiceRequestsDetail.KMIDToken)
+               && serviceIds.Contains(Convert.ToInt32(p.ServiceId)))
+       .ToListAsync();
 
-
-        }
-
- public class CreateRenewImportLicenseDTO
- {
-     public string RequestNumber { get; set; }
-     public string eServiceRequestId { get; set; }
-     public string ImporterLicenseNo { get; set; }
-     public DateTime LicenseIssueDate { get; set; }
-     public DateTime LicenseExpiryDate { get; set; }
-     public string TypeOfLicenseRequest { get; set; }
-     public string IndustrialLicenseNo { get; set; }
-     public string CommercialLicenseNo { get; set; }
-     public string LicenseType { get; set; }
-     public string LicenseTypeDesc { get; set; }
-     public int ImporterLicenseType { get; set; }
-     public string ImporterLicenseTypeDesc { get; set; }
-     public bool IsFromSahel { get; set; }
-     public string SelectedAuthorizerCivilId { get; set; }
- }
+  var kmidCreatedList = requestList.Select(a=>a.ServiceRequestsDetail.KMIDToken).ToList();
+  List<KGACPACIQueue>? expiredKmidRequests = await _eServicesContext
+.Set<KGACPACIQueue>()
+.Where(a => kmidCreatedList.Contains(a.KGACPACIQueueId.ToString())
+&& a.DateCreated + TimeSpan.FromSeconds(_sahelConfigurations.OrganizationKMIDCallingTimer)>DateTime.Now)
+.ToListAsync();
