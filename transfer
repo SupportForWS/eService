@@ -1,20 +1,21 @@
-System.AggregateException: 'Some services are not able to be constructed (Error while validating the service descriptor '
-ServiceType: 
-MediatR.IRequestHandler`2[eServices.APIs.UserApp.Application.Features.V1.Commands.OrganizationServicesCommands
-.SahelOrgServicesCommands.SubmitAddNewImportLicenseCommand,System.String] 
-Lifetime: Transient ImplementationType: 
-eServices.APIs.UserApp.Application.Features.V1.Commands.OrganizationServicesCommands
-.SahelOrgServicesCommands.SubmitAddNewImportLicenseCommand+SubmitAddNewImportLicenseHandler':
- Unable to resolve service for type 
- 'eServicesV2.Kernel.ApplicationService.ApplicationOrganizationServices.ApplicationOrganizationServices' 
- while attempting to activate 
- 'eServices.APIs.UserApp.Application.Features.V1.Commands.OrganizationServicesCommands.SahelOrgServicesCommands.SubmitAddNewImportLicenseCommand+SubmitAddNewImportLicenseHandler'.)
- (Error while validating the service descriptor 'ServiceType: 
- MediatR.IRequestHandler`2[eServices.APIs.UserApp.Application.Features.V1.Commands
- .OrganizationServicesCommands.SahelOrgServicesCommands.SubmitRenewImportLicenseCommand,System.String]
- Lifetime: 
- Transient ImplementationType: 
- eServices.APIs.UserApp.Application.Features.V1.Commands.OrganizationServicesCommands
- .SahelOrgServicesCommands.SubmitRenewImportLicenseCommand+SubmitRenewImportLicenseCommandHandler': 
- Unable to resolve service for type 
- 'eServicesV2.Kernel.ApplicationService.ApplicationOrganizationServices.ApplicationOrganizationServices' while attempting to activate 'eServices.APIs.UserApp.Application.Features.V1.Commands.OrganizationServicesCommands.SahelOrgServicesCommands.SubmitRenewImportLicenseCommand+SubmitRenewImportLicenseCommandHandler'.)'
+    while (true)
+    {
+        var data = MobileDataBase.GetKMIDVerificationStatusFromDB(token);
+        if (data.Rows.Count == 1)
+        {
+            string status = data.Rows[0]["KMIDStatusDetails"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status.Equals("Accept"))
+                {
+                    kMIDStatus = KMIDVerificationStatusEnum.KMIDRequestPassed.ToString();
+
+                }
+                else if (status.Equals("Decline"))
+                {
+                    kMIDStatus = KMIDVerificationStatusEnum.KMIDRequestRejected.ToString();
+
+                }
+            }
+        }
