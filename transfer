@@ -1,63 +1,27 @@
- public enum ServiceTypesEnum
+        public class CreateAddNewImportLicenseDTO
+        {
+            public string RequestNumber { get; set; }
+            public string ImporterLicenseNo { get; set; }
+            public string SelectedAuthorizerCivilId { get; set; }
+            public bool IsFromSahel { get; set; }
+
+
+        }
+
+ public class CreateRenewImportLicenseDTO
  {
-     subScriptionService = 0,
-     RenewalService = 2,
-     ExamService = 7,
-     EPaymentService = 8,
-     DeclarationTracking = 9,
-     HSCodeSearch = 10,
-     DeActivateService = 12,
-     TransferService = 14,
-     BrsPrintingCancelLicense = 13,
-     WhomItConcernsLetterService = 15,
-     PrintLostIdCard = 16,
-     IssuanceService = 17,
-     OrganizationRegistrationService = 3,
-     BrsPrintingCancelCommercialLicense = 20,
-     BrsPrintingIssueLicense = 21,
-     BrsPrintingChangeLicenseAddress = 22,
-     BrsPrintingChangeLicenseActivity = 23,
-     BrsPrintingReleaseBankGuarantee = 24,
-     BrsPrintingGoodBehave = 25,
-     BrsPrintingRenewLicense = 26,
-     BrsPrintingChangeJobTitleRenewResidency = 27,
-     BrsPrintingChangeJobTitleTransferResidency = 28,
-     BrsPrintingRenewResidency = 29,
-     BrsPrintingTransferResidency = 30,
-     BrsPrintingChangeJobTitle = 31,
-     BrsPrintingChangeJobTitleCivil = 32,
-     BrsPrintingDeActivateLicenseDeath = 33,
-     ShipmentAutorizationServiceID = 36,
-     ConsigneeUndertakingRequest = 40,
-     OrgNameChangeReqServiceId = 41,
-     NewImportLicenseRequest = 42,
-     ImportLicenseRenewalRequest = 43,
-     IndustrialLicenseRenewalRequest = 44,
-     CommercialLicenseRenewalRequest = 45,
-     AddNewAuthorizedSignatoryRequest = 46,
-     RenewAuthorizedSignatoryRequest = 47,
-     RemoveAuthorizedSignatoryRequest = 48,
-     ChangeCommercialAddressRequest = 49,
-     UserCancellation = 50,
-     DeactivateAccount = 51,
-     UserAccountUpdate = 52, //todo: to be checked with update account page
-     CustomsBusinessActivity = 53,
-     RegisterCustomsBusinessActivity = 54,
-     DeActivateCustomsBusinessActivity = 55,
-     ReActivateCustomsBusinessActivity = 56,
-     BankGuaranteeForCustomsBusinessActivity = 57,
-     RegisterBankGuaranteeForCustomsBusinessActivity = 58,
-     ExtendBankGuaranteeForCustomsBusinessActivity = 59,
-     ReleaseBankGuaranteeForCustomsBusinessActivity = 60,
-     BankGuaranteeForCustomsClearance = 61,
-     RegisterBankGuaranteeForCustomsClearance = 62,
-     ExtendBankGuaranteeForCustomsClearance = 63,
-     ReleaseBankGuaranteeForCustomsClearance = 64,
-     CustomSystemUser = 65,
-     RegisterCustomsSystemUser = 66,
-     UpdateOrActivateCustomsSystemUser = 67,
-     DeactivateCustomsSystemUser = 68,
-     GCCVehicleImporting = 69,
-     BrokerAffairsLetter = 70,
-     IndividualAuthorization = 71
+     public string RequestNumber { get; set; }
+     public string eServiceRequestId { get; set; }
+     public string ImporterLicenseNo { get; set; }
+     public DateTime LicenseIssueDate { get; set; }
+     public DateTime LicenseExpiryDate { get; set; }
+     public string TypeOfLicenseRequest { get; set; }
+     public string IndustrialLicenseNo { get; set; }
+     public string CommercialLicenseNo { get; set; }
+     public string LicenseType { get; set; }
+     public string LicenseTypeDesc { get; set; }
+     public int ImporterLicenseType { get; set; }
+     public string ImporterLicenseTypeDesc { get; set; }
+     public bool IsFromSahel { get; set; }
+     public string SelectedAuthorizerCivilId { get; set; }
  }
