@@ -1,21 +1,2 @@
-    while (true)
-    {
-        var data = MobileDataBase.GetKMIDVerificationStatusFromDB(token);
-        if (data.Rows.Count == 1)
-        {
-            string status = data.Rows[0]["KMIDStatusDetails"].ToString();
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                if (status.Equals("Accept"))
-                {
-                    kMIDStatus = KMIDVerificationStatusEnum.KMIDRequestPassed.ToString();
-
-                }
-                else if (status.Equals("Decline"))
-                {
-                    kMIDStatus = KMIDVerificationStatusEnum.KMIDRequestRejected.ToString();
-
-                }
-            }
-        }
+ALTER TABLE etrade.eservicerequests
+ADD RequestSource Varchar(50) null
