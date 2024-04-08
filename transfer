@@ -1,65 +1,120 @@
-[09:42:06 INF] Application started. Press Ctrl+C to shut down.
-[09:42:06 INF] Hosting environment: Development
-[09:42:06 INF] Content root path: D:\SahelIAIntegrationWS\sahelIntegrationIA
-[09:42:07 INF] New Worker running at: 04/08/2024 09:42:07 +03:00
-Sahel integration with individual authorization Worker running at: {time}4/8/2024 9:42:07 AM +03:00
-[09:42:24 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
-[09:42:24 WRN] The 'bool' property 'IsRequired' on entity type 'CustomsBusinessActivity' is configured with a database-generated default. This default will always be used for inserts when the property has the value 'false', since this is the CLR default for the 'bool' type. Consider using the nullable 'bool?' type instead, so that the default will only be used for inserts when the property value is 'null'.
-[09:42:24 WRN] The index named 'IX_PersonalId' on the entity type 'CustomsSystemUserDetails' specifies properties {'PersonalId'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
-[09:42:24 WRN] The index named 'NCI_Users_Date' on the entity type 'CustomsSystemUserDetails' specifies properties {'DateCreated', 'DateModified'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
-[09:42:24 WRN] The index named 'ix_Users_orgid_2022' on the entity type 'CustomsSystemUserDetails' specifies properties {'OrganizationId'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
-[09:42:24 WRN] No store type was specified for the decimal property 'Amount' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'CreditPercentage' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'OpeningAmount' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'BGAmount' on entity type 'BrokerBGDetails'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'BGAmount' on entity type 'OrganizationBGDetails'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'Amount' on entity type 'CustomsBusinessActivityBankGuaranteeRoleAmount'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:24 WRN] No store type was specified for the decimal property 'BankGuaranteeAmount' on entity type 'ServiceRequestsDetail'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
-[09:42:27 INF] Executed DbCommand (255ms) [Parameters=[], CommandType='Text', CommandTimeout='60']
+[09:49:51 INF] Application started. Press Ctrl+C to shut down.
+[09:49:51 INF] Hosting environment: Development
+[09:49:51 INF] Content root path: D:\SahelIAIntegrationWS\sahelIntegrationIA
+[09:49:52 INF] New Worker running at: 04/08/2024 09:49:52 +03:00
+Sahel integration with individual authorization Worker running at: {time}4/8/2024 9:49:52 AM +03:00
+[09:50:19 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+[09:50:20 WRN] The 'bool' property 'IsRequired' on entity type 'CustomsBusinessActivity' is configured with a database-generated default. This default will always be used for inserts when the property has the value 'false', since this is the CLR default for the 'bool' type. Consider using the nullable 'bool?' type instead, so that the default will only be used for inserts when the property value is 'null'.
+[09:50:20 WRN] The index named 'IX_PersonalId' on the entity type 'CustomsSystemUserDetails' specifies properties {'PersonalId'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
+[09:50:20 WRN] The index named 'NCI_Users_Date' on the entity type 'CustomsSystemUserDetails' specifies properties {'DateCreated', 'DateModified'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
+[09:50:20 WRN] The index named 'ix_Users_orgid_2022' on the entity type 'CustomsSystemUserDetails' specifies properties {'OrganizationId'}, but none of these properties are mapped to a column in any table. This index will not be created in the database.
+[09:50:20 WRN] No store type was specified for the decimal property 'Amount' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'CreditPercentage' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'OpeningAmount' on entity type 'BankGuarantee'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'BGAmount' on entity type 'BrokerBGDetails'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'BGAmount' on entity type 'OrganizationBGDetails'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'Amount' on entity type 'CustomsBusinessActivityBankGuaranteeRoleAmount'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:20 WRN] No store type was specified for the decimal property 'BankGuaranteeAmount' on entity type 'ServiceRequestsDetail'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+[09:50:22 INF] Executed DbCommand (234ms) [Parameters=[], CommandType='Text', CommandTimeout='60']
 SELECT [e].[EServiceRequestId], [e].[ApprovedBy], [e].[ApprovedDate], [e].[CreatedBy], [e].[DateCreated], [e].[DateModified], [e].[DeliveredBy], [e].[DeliveredDate], [e].[DeliveryRemarks], [e].[EServiceRequestNumber], [e].[KNetReceiptNo], [e].[ModifiedBy], [e].[OwnerLocId], [e].[OwnerOrgId], [e].[RequestCompletionDateTime], [e].[RequestSource], [e].[RequestSubmissionDateTime], [e].[RequesterUserId], [e].[RequesterUserType], [e].[RevokeActionDate], [e].[ServiceId], [e].[StateId], [e].[SubscriberCivilId], [e].[UTFExpDate], [e0].[EserviceRequestDetailsId], [e0].[AdditionalInfoRemarks], [e0].[Address], [e0].[AirCustomsDepartment], [e0].[ApartmentNumber], [e0].[ApartmentType], [e0].[ArabicFirstName], [e0].[ArabicLastName], [e0].[ArabicSecondName], [e0].[ArabicThirdName], [e0].[AssociatedOrgIds], [e0].[AuthorizedPerson], [e0].[AuthorizedSignatoryCivilIdExpiryDate], [e0].[BankGuaranteeAmount], [e0].[BankGuaranteeBankId], [e0].[BankGuaranteeCustomsBusinessActivityId], [e0].[BankGuaranteeCustomsSystemUserId], [e0].[BankGuaranteeDate], [e0].[BankGuaranteeExpiryDate], [e0].[BankGuaranteeNumber], [e0].[BankGuranteeFor], [e0].[BankTransactionExpiryDate], [e0].[BgId], [e0].[Block], [e0].[BrokFileNo], [e0].[BusiFaxNo], [e0].[BusiNo], [e0].[ChangeJobTitleFrom], [e0].[ChangeJobTitleTo], [e0].[City], [e0].[CivilID], [e0].[CivilIDExpiryDate], [e0].[CommercialLicenseNo], [e0].[CommercialLicenseType], [e0].[CommercialLicenseTypeDesc], [e0].[CompanyCivilId], [e0].[CountryId], [e0].[CreatedBy], [e0].[CreatedBySahel], [e0].[CustomsBusinessActivityId], [e0].[CustomsUserArabicName], [e0].[CustomsUserCivilId], [e0].[CustomsUserEnglishName], [e0].[CustomsUserResetPassword], [e0].[DateCreated], [e0].[DateModified], [e0].[DateOfBirth], [e0].[DeactivateReason], [e0].[Email], [e0].[EnglishFirstName], [e0].[EnglishLastName], [e0].[EnglishSecondName], [e0].[EnglishThirdName], [e0].[EserviceRequestId], [e0].[ExamAddmissionId], [e0].[ExamDetailsId], [e0].[ExistingCivilId], [e0].[ExistingEmailId], [e0].[ExistingFirstName], [e0].[ExistingGender], [e0].[ExistingLastName], [e0].[ExistingMobileNumber], [e0].[ExpiryDate], [e0].[Floor], [e0].[FromBusiness], [e0].[Gender], [e0].[ImporterLicenseNo], [e0].[ImporterLicenseType], [e0].[ImporterLicenseTypeDesc], [e0].[IndustrialLicenseNo], [e0].[IsBankGuaranteeRequiredForCustomsUser], [e0].[IsDelivered], [e0].[IssueDate], [e0].[KMIDToken], [e0].[LandCustomsDepartment], [e0].[LicenseExpiryDate], [e0].[LicenseIssueDate], [e0].[LicenseNumber], [e0].[LicenseNumberExpiryDate], [e0].[LicenseNumberIssueDate], [e0].[MCPersonalId], [e0].[MobileNo], [e0].[MobileNumber], [e0].[ModifiedBy], [e0].[Nationality], [e0].[NewOrgAraName], [e0].[NewOrgEngName], [e0].[OldOrgAraName], [e0].[OldOrgEngName], [e0].[OperatorCode], [e0].[OrganizationId], [e0].[OwnerLocId], [e0].[OwnerOrgId], [e0].[PassportExpiryDate], [e0].[PassportNo], [e0].[POBoxNo], [e0].[PostalCode], [e0].[PreferredLanguage], [e0].[RecipientCivilId], [e0].[RecipientsMobileNo], [e0].[RejectionReason], [e0].[RejectionRemarks], [e0].[Remarks], [e0].[ReqCompletionDate], [e0].[RequestForEmail], [e0].[RequestForName], [e0].[RequestForUserId], [e0].[RequestForUserType], [e0].[RequestForVisit], [e0].[RequestForVisitRemarks], [e0].[RequestServicesId], [e0].[RequesterArabicName], [e0].[RequesterEmailId], [e0].[RequesterEnglishName], [e0].[RequesterLicenseNumber], [e0].[RequesterUserId], [e0].[ResidenceNo], [e0].[SahelToken1], [e0].[SahelToken2], [e0].[SeaCustomsDepartment], [e0].[SelectedAuthorizer], [e0].[State], [e0].[StateId], [e0].[status], [e0].[Street], [e0].[UpdatePassword], [e0].[UpdateReason], [e0].[UserComment], [e0].[UserDetailsReceivedby], [e0].[UserId], [e0].[UTFBrokerPersonalId], [e0].[WebPageAddress]
 FROM [etrade].[EServiceRequests] AS [e]
 LEFT JOIN [etrade].[EServiceRequestsDetails] AS [e0] ON [e].[EServiceRequestId] = [e0].[EserviceRequestId]
 WHERE [e].[StateId] IN ('EServiceRequestORGCreatedState', 'EServiceRequestORGForAdditionalInfo', 'EServiceRequestORGRejectedState', 'EServiceRequestCreatedState', 'EServiceRequestRejectedState') AND [e].[RequestSource] = N'Sahel' AND ([e0].[KMIDToken] IS NOT NULL) AND NOT ([e0].[KMIDToken] LIKE N'') AND CAST([e].[ServiceId] AS int) IN (42, 43)
-[09:42:36 ERR] BackgroundService failed
-System.InvalidOperationException: The LINQ expression 'DbSet<KGACPACIQueue>()
-    .Where(k => __kmidCreatedList_0.Contains(k.KGACPACIQueueId.ToString()) && k.DateCreated + __FromSeconds_1 > DateTime.Now)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.<VisitMethodCall>g__CheckTranslated|15_0(ShapedQueryExpression translated, <>c__DisplayClass15_0&)
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
-   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass12_0`1.<ExecuteAsync>b__0()
-   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
-   at System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.GetAsyncEnumerator()
+[09:50:35 INF] Executed DbCommand (146ms) [Parameters=[], CommandType='Text', CommandTimeout='60']
+SELECT [k].[KGACPACIQueueId], [k].[AdditionalData], [k].[AuthReasonAr], [k].[AuthReasonEn], [k].[CallBackData], [k].[CallData], [k].[CallEDatetime], [k].[CallSDatetime], [k].[CallStatus], [k].[CallerId], [k].[CallerTranId], [k].[CallerTranType], [k].[Challenge], [k].[CreatedBy], [k].[DateCreated], [k].[DateModified], [k].[Error], [k].[KGACUniqueId], [k].[ModifiedBy], [k].[PACIRequestID], [k].[PACIUniqueId], [k].[PersonCivilNo], [k].[QRCode], [k].[QRCodeImage], [k].[RequestUserDetails], [k].[ResponseData], [k].[ResultCode], [k].[ResultCodeEn], [k].[ServiceDescAR], [k].[ServiceDescEN], [k].[UserActionCode], [k].[UserActionEn]
+FROM [KGACPACIQueue] AS [k]
+WHERE CONVERT(varchar(11), [k].[KGACPACIQueueId]) = N'159348'
+[09:50:35 ERR] An exception occurred while iterating over the results of a query for context type 'sahelIntegrationIA.Models.eServicesContext'.
+System.Data.SqlTypes.SqlNullValueException: Data is Null. This method or property cannot be called on Null values.
+   at Microsoft.Data.SqlClient.SqlBuffer.ThrowIfNull()
+   at Microsoft.Data.SqlClient.SqlBuffer.get_String()
+   at Microsoft.Data.SqlClient.SqlDataReader.GetString(Int32 i)
+   at lambda_method1037(Closure, DbDataReader, Int32[])
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadObject(DbDataReader reader, Int32 ordinal, ReaderColumn column)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadRow()
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.InitializeAsync(DbDataReader reader, IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+System.Data.SqlTypes.SqlNullValueException: Data is Null. This method or property cannot be called on Null values.
+   at Microsoft.Data.SqlClient.SqlBuffer.ThrowIfNull()
+   at Microsoft.Data.SqlClient.SqlBuffer.get_String()
+   at Microsoft.Data.SqlClient.SqlDataReader.GetString(Int32 i)
+   at lambda_method1037(Closure, DbDataReader, Int32[])
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadObject(DbDataReader reader, Int32 ordinal, ReaderColumn column)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadRow()
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.InitializeAsync(DbDataReader reader, IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+[09:50:36 ERR] BackgroundService failed
+System.Data.SqlTypes.SqlNullValueException: Data is Null. This method or property cannot be called on Null values.
+   at Microsoft.Data.SqlClient.SqlBuffer.ThrowIfNull()
+   at Microsoft.Data.SqlClient.SqlBuffer.get_String()
+   at Microsoft.Data.SqlClient.SqlDataReader.GetString(Int32 i)
+   at lambda_method1037(Closure, DbDataReader, Int32[])
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadObject(DbDataReader reader, Int32 ordinal, ReaderColumn column)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadRow()
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.InitializeAsync(DbDataReader reader, IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRequestList() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 59
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRequestList() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 61
    at IndividualAuthorizationSahelWorker.Worker.ExecuteAsync(CancellationToken stoppingToken) in D:\SahelIAIntegrationWS\sahelIntegrationIA\Worker.cs:line 35
    at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
-[09:42:36 FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
-System.InvalidOperationException: The LINQ expression 'DbSet<KGACPACIQueue>()
-    .Where(k => __kmidCreatedList_0.Contains(k.KGACPACIQueueId.ToString()) && k.DateCreated + __FromSeconds_1 > DateTime.Now)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.<VisitMethodCall>g__CheckTranslated|15_0(ShapedQueryExpression translated, <>c__DisplayClass15_0&)
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
-   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass12_0`1.<ExecuteAsync>b__0()
-   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
-   at System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.GetAsyncEnumerator()
+[09:50:36 FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.Data.SqlTypes.SqlNullValueException: Data is Null. This method or property cannot be called on Null values.
+   at Microsoft.Data.SqlClient.SqlBuffer.ThrowIfNull()
+   at Microsoft.Data.SqlClient.SqlBuffer.get_String()
+   at Microsoft.Data.SqlClient.SqlDataReader.GetString(Int32 i)
+   at lambda_method1037(Closure, DbDataReader, Int32[])
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadObject(DbDataReader reader, Int32 ordinal, ReaderColumn column)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.ReadRow()
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.BufferedDataRecord.InitializeAsync(DbDataReader reader, IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.BufferedDataReader.InitializeAsync(IReadOnlyList`1 columns, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRequestList() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 59
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRequestList() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 61
    at IndividualAuthorizationSahelWorker.Worker.ExecuteAsync(CancellationToken stoppingToken) in D:\SahelIAIntegrationWS\sahelIntegrationIA\Worker.cs:line 35
    at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
-[09:42:36 INF] Application is shutting down...
+[09:50:36 INF] Application is shutting down...
 
-D:\SahelIAIntegrationWS\sahelIntegrationIA\bin\Debug\net7.0\sahelIntegrationIA.exe (process 12148) exited with code 0.
+D:\SahelIAIntegrationWS\sahelIntegrationIA\bin\Debug\net7.0\sahelIntegrationIA.exe (process 21592) exited with code 0.
 To automatically close the console when debugging stops, enable Tools->Options->Debugging->Automatically close the console when debugging stops.
 Press any key to close this window . . .
