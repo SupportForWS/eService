@@ -1,18 +1,67 @@
-System.InvalidOperationException
-  HResult=0x80131509
-  Message=Nullable object must have a value.
-  Source=System.Private.CoreLib
-  StackTrace:
-   at System.ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue()
-   at System.Nullable`1.get_Value()
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(ServiceRequest serviceRequest) in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 242
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequestAndCallAPI>d__11.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 174
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequest>d__10.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 145
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<>c__DisplayClass9_0.<<CreateRequestObjectDTO>b__0>d.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 92
+using eServicesV2.Kernel.Core.Resources;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-  This exception was originally thrown at this call stack:
-    [External Code]
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequestAndCallAPI(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequest(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.CreateRequestObjectDTO.AnonymousMethod__0(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
+namespace eServicesV2.Kernel.Core.Wrappers
+{
+    public class ServiceResponse
+    {
+        public bool Succeeded { get; set; }
+        public ResourcesEnum Message { get; set; }
+
+        public ServiceResponse()
+        {
+        }
+
+        public ServiceResponse(ResourcesEnum message)
+        {
+            Succeeded = false;
+            Message = message;
+        }
+
+        //public ServiceResponse(bool succeeded)
+        //{
+        //    Succeeded = succeeded;
+        //    Message = Succeeded ? "Operation has been completed successfully." : "Operation has been failed!";
+        //}
+
+        //public static implicit operator ServiceResponse(bool successded)
+        //{
+        //    return new ServiceResponse(successded);
+        //}
+
+        //public static implicit operator ServiceResponse(string message)
+        //{
+        //    return new ServiceResponse(message);
+        //}
+    }
+
+    public class ServiceResponse<T> : ServiceResponse
+    {
+        public T Data { get; set; }
+
+        public ServiceResponse() { }
+
+        public ServiceResponse(T data, bool succeeded = true, ResourcesEnum message = ResourcesEnum.updatedSuccess)
+        {
+            Succeeded = succeeded;
+            Message = message;
+            Data = data;
+        }
+
+        public ServiceResponse(ResourcesEnum message) : base(message) { }
+
+        //public ServiceResponse(bool succeeded) : base(succeeded) { }
+
+        public static implicit operator ServiceResponse<T>(T data)
+        {
+            return new ServiceResponse<T>(data);
+        }
+    }
+
+
+}
+
