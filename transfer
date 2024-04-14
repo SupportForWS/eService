@@ -1,18 +1,5 @@
-System.InvalidOperationException
-  HResult=0x80131509
-  Message=Nullable object must have a value.
-  Source=System.Private.CoreLib
-  StackTrace:
-   at System.ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue()
-   at System.Nullable`1.get_Value()
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(ServiceRequest serviceRequest) in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 242
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequestAndCallAPI>d__11.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 174
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequest>d__10.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 145
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<>c__DisplayClass9_0.<<CreateRequestObjectDTO>b__0>d.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 92
 
-  This exception was originally thrown at this call stack:
-    [External Code]
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequestAndCallAPI(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequest(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.CreateRequestObjectDTO.AnonymousMethod__0(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
+Msg 5074, Level 16, State 1, Line 16
+The object 'DF__EServiceR__Ready__4A6941E8' is dependent on column 'ReadyForSahelSubmission'.
+ALTER TABLE DROP COLUMN ReadyForSahelSMsg 4922, Level 16, State 9, Line 16
+ubmission failed because one or more objects access this column.
