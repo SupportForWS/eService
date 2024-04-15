@@ -1,18 +1,484 @@
-System.InvalidOperationException
-  HResult=0x80131509
-  Message=Nullable object must have a value.
-  Source=System.Private.CoreLib
-  StackTrace:
-   at System.ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue()
-   at System.Nullable`1.get_Value()
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(ServiceRequest serviceRequest) in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 242
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequestAndCallAPI>d__11.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 174
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequest>d__10.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 145
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<>c__DisplayClass9_0.<<CreateRequestObjectDTO>b__0>d.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 92
+USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[SubmitChangeCommercialAddressRequest]    Script Date: 4/15/2024 11:41:45 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER         procedure [etrade].[SubmitChangeCommercialAddressRequest](--[etrade].[GetOrInitializeChangeCommercialAddressRequest] (   
+@eServiceRequestId varchar(200) = NULL,   
+@RequestNumber NVARCHAR(100) = NULL,
+@POBoxNo               NVARCHAR(100) = NULL,   
+@Address               NVARCHAR(max) = NULL,   
+@City                  NVARCHAR(50) = NULL,   
+@State                 NVARCHAR(50) = NULL,   
+@PostalCode            NVARCHAR(50) = NULL,   
+@CountryId             VARCHAR(10) = NULL,   
+@BusiNo                NVARCHAR(50) = NULL,   
+@BusiFaxNo             NVARCHAR(50) = NULL,   
+@MobileNo              VARCHAR(50) = NULL,   
+@ResidenceNo           VARCHAR(50) = NULL,   
+@EmailId               VARCHAR(50) = NULL,   
+@WebPageAddress        VARCHAR(500) = NULL,   
+@UserId               VARCHAR(100) = NULL,  
+@Block                  NVARCHAR(200) = NULL,    
+@Street                  NVARCHAR(200) = NULL ,  
+@Floor                  NVARCHAR(200) = NULL,  
+@ApartmentType                  NVARCHAR(200) = NULL,  
+@ApartmentNumber                  NVARCHAR(200) = NULL 
+) 
+AS   
+  BEGIN 
 
-  This exception was originally thrown at this call stack:
-    [External Code]
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequestAndCallAPI(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequest(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.CreateRequestObjectDTO.AnonymousMethod__0(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
+  DECLARE @serviceid int=null
+  
+  SELECT @serviceid=serviceid from etrade.EServiceRequests er WHERE EServiceRequestId=@EserviceRequestId 
+
+		DECLARE @OrgId nvarchar(200)
+SET  @OrgId=(SELECT top 1 a.ORGANIZATIONID FROM etrade.mobileuserorgmaps a INNER JOIN etrade.mobileuser b 
+on  a.userid=b.userid AND a.ParentOrgTradeLicence=b.LicenseNumber WHERE a.userid=@UserId ORDER BY a.Mobileuserorgmapid desc)--(SELECT ORGANIZATIONID FROM etrade.mobileuserorgmaps WHERE userid=@UserId )--AND etrade.mobileuserorgmaps.isActive=1)
+
+
+ IF EXISTS(SELECT 1 FROM ETRADE.EServiceRequests A INNER JOIN ETRADE.EServiceRequestsDetails B ON A.EServiceRequestId=B.EserviceRequestId
+WHERE A.ServiceId=@serviceid AND B.OrganizationId=@OrgId
+AND A.StateId IN('EServiceRequestORGSubmittedState')  AND a.eServiceRequestId!=@eServiceRequestId)
+OR EXISTS(  SELECT 1 FROM etrade.EServiceRequests  WHERE 
+serviceid=41 AND createdby=@userid AND    STATEID IN('EServiceRequestORGSubmittedState','EServiceRequestORGForAdditionalInfo'
+,'EServiceRequestORGForVisitState','EServiceRequestORGReSubmittedState')  )
+BEGIN
+SELECT '-1111' AS 'STATUS'
+RETURN;
+END 
+	UPDATE etrade.EServiceRequests
+	SET
+
+	    etrade.EServiceRequests.RequestSubmissionDateTime = getdate(), -- datetime
+
+	    etrade.EServiceRequests.StateId =(CASE WHEN b.RejectionRemarks IS NULL then  'EServiceRequestORGSubmittedState' ELSE 'EServiceRequestORGReSubmittedState' end), -- varchar
+
+	    etrade.EServiceRequests.ModifiedBy = '', -- varchar
+	    etrade.EServiceRequests.DateModified = getdate()--, -- datetime
+	   from etrade.EServiceRequestsDetails b
+
+	   WHERE etrade.EServiceRequests.EserviceRequestId=@EserviceRequestId--38279 --@EserviceRequestId
+	   AND b.EserviceRequestId=@EserviceRequestId
+
+	UPDATE etrade.EServiceRequestsDetails
+	SET
+	    etrade.EServiceRequestsDetails.Address = @Address, -- nvarchar
+	    etrade.EServiceRequestsDetails.Email = @EmailId, -- varchar
+	    etrade.EServiceRequestsDetails.status = '', -- varchar
+	    etrade.EServiceRequestsDetails.StateId =(CASE WHEN RejectionRemarks IS NULL then  'EServiceRequestDetailsORGSubmittedState' ELSE 'EServiceRequestDetailsORGReSubmittedState' end), -- varchar
+	    etrade.EServiceRequestsDetails.ModifiedBy = '', -- varchar
+	    etrade.EServiceRequestsDetails.DateModified = getdate(), -- datetime
+	    etrade.EServiceRequestsDetails.POBoxNo =@POBoxNo, 
+	    etrade.EServiceRequestsDetails.City =@City, 
+	    etrade.EServiceRequestsDetails.State =@State, 
+	    etrade.EServiceRequestsDetails.PostalCode =@PostalCode, 
+	    etrade.EServiceRequestsDetails.CountryId =@CountryId, 
+	    etrade.EServiceRequestsDetails.BusiNo =@BusiNo, 
+	    etrade.EServiceRequestsDetails.BusiFaxNo =@BusiFaxNo, --qasem2024
+	    etrade.EServiceRequestsDetails.MobileNo =@MobileNo, 
+	    etrade.EServiceRequestsDetails.ResidenceNo =@ResidenceNo, 
+	    etrade.EServiceRequestsDetails.WebPageAddress =@WebPageAddress, 
+	    etrade.EServiceRequestsDetails.Block =@Block, 
+	    etrade.EServiceRequestsDetails.Street =@Street,
+	    etrade.EServiceRequestsDetails.Floor =@Floor,
+	    etrade.EServiceRequestsDetails.ApartmentType =@ApartmentType,
+	    etrade.EServiceRequestsDetails.ApartmentNumber =@ApartmentNumber,
+		etrade.EServiceRequestsDetails.ReadyForSahelSubmission=0
+
+		WHERE 
+	    etrade.EServiceRequestsDetails.EserviceRequestId = @eServiceRequestId
+  
+  	   
+  
+  Declare @ADDOrganizationRequestId int =(SELECT OrganizationRequestId FROM etrade.OrganizationRequests WHERE RequestNumber=(SELECT EServiceRequestNumber FROM etrade.EServiceRequests WHERE EServiceRequestId=@EserviceRequestId )),
+	@ADDRequestNumber nvarchar(50) =(SELECT EServiceRequestNumber FROM etrade.EServiceRequests WHERE EServiceRequestId=@EserviceRequestId ),
+	@ADDRequesterOwner int =@userid,
+	@ADDName nvarchar(240) =NULL,
+	@ADDOrganizationId int =@orgid,
+	@ADDLocalDescription nvarchar(340) =NULL,
+	@ADDCivilId varchar(20) =NULL,
+	@ADDAuthPerson nvarchar(240) =NULL,
+	@ADDCommercialLicenseNo nvarchar(200) =null,
+	@ADDCommercialLicenseType int =NULL,
+	@ADDCommercialLicenseIssueDate datetime =NULL,
+	@ADDCommercialLicenseExpiryDate datetime =NULL,
+	@ADDImporterLicenseNo nvarchar(200) =null,
+	@ADDImporterLicenseType int =NULL,
+	@ADDImporterLicenseIssueDate datetime =NULL,
+	@ADDImporterLicenseExpiryDate datetime =NULL,
+	@ADDIndustrialLicenseNo varchar(50) =null,
+	@ADDIndIssueDate datetime =NULL,
+	@ADDIndExpiryDate datetime =NULL,
+	@ADDDateCreated datetime =getdate(),
+	@ADDCreatedBy varchar(35) =@userid,
+	@ADDStateId varchar(50) ='EServiceRequestORGSubmittedState',
+	@ADDRequestedDate datetime =NULL,
+	@ADDEserviceRequestNumber varchar(100) =(SELECT EServiceRequestNumber FROM etrade.EServiceRequests WHERE EServiceRequestId=@EserviceRequestId ),
+	@AuthPersonNationality nvarchar(100) =NULL,
+	@AuthPersonIssueDate nvarchar(100) =NULL,
+	@AuthPersonExpiryDate nvarchar(100) =NULL,
+
+	@ADDPostBoxNumber nvarchar(30) =@poboxno,
+	@ADDCity nvarchar(60) =@City,
+	@ADDState nvarchar(60) =@State,
+	@ADDPostalCode nvarchar(30) =@PostalCode,
+	@ADDCountry int =@CountryId,
+	@ADDAddress nvarchar(1000) =@Address,
+	@ADDBlock nvarchar(200) =@Block,
+	@ADDStreet nvarchar(200) =@Street,
+	@ADDFloor nvarchar(200) =@Floor,
+	@ADDApartmentType nvarchar(200) =@ApartmentType,
+	@ADDApartmentNumber nvarchar(200) =@ApartmentNumber,
+
+
+
+	@ADDBusinessTelNumber nvarchar(40) =@BusiNo,--qasem2024
+	@ADDHomeTelNumber varchar(20) =@ResidenceNo,
+	@ADDBusinessFaxNumber nvarchar(40) =@BusiFaxNo,--qasem2024
+	@ADDMobileTelNumber varchar(15) =@MobileNo,
+	@ADDEMail varchar(50) =@EMailId,
+	@ADDWebPageAddress varchar(50) =@WebPageAddress,
+	@ADDType nvarchar(50)='Submit' --Start/Submit
+
+	EXEC etrade.ManageOrgServices @ADDOrganizationRequestId  ,
+	@ADDRequestNumber  ,
+	@ADDRequesterOwner  ,
+	@ADDName  ,
+	@ADDOrganizationId  ,
+	@ADDLocalDescription  ,
+	@ADDCivilId  ,
+	@ADDAuthPerson  ,
+	@ADDCommercialLicenseNo  ,
+	@ADDCommercialLicenseType,
+	@ADDCommercialLicenseIssueDate  ,
+	@ADDCommercialLicenseExpiryDate  ,
+	@ADDImporterLicenseNo  ,
+	@ADDImporterLicenseType  ,
+	@ADDImporterLicenseIssueDate  ,
+	@ADDImporterLicenseExpiryDate  ,
+	@ADDIndustrialLicenseNo  ,
+	@ADDIndIssueDate  ,
+	@ADDIndExpiryDate  ,
+	@ADDDateCreated  ,
+	@ADDCreatedBy  ,
+	@ADDStateId  ,
+	@ADDRequestedDate  ,
+	@ADDEserviceRequestNumber  ,
+	@AuthPersonNationality ,
+	@AuthPersonIssueDate  ,
+	@AuthPersonExpiryDate  ,
+
+	@ADDPostBoxNumber  ,
+	@ADDCity  ,
+	@ADDState  ,
+	@ADDPostalCode  ,
+	@ADDCountry  ,
+	@ADDAddress  ,
+	@ADDBlock  ,
+	@ADDStreet  ,
+	@ADDFloor  ,
+	@ADDApartmentType  ,
+	@ADDApartmentNumber  ,
+
+
+
+	@ADDBusinessTelNumber  ,
+	@ADDHomeTelNumber  ,
+	@ADDBusinessFaxNumber  ,
+	@ADDMobileTelNumber  ,
+	@ADDEMail  ,
+	@ADDWebPageAddress  ,
+	@ADDType  --Start/Submit
+
+
+   DECLARE @UserEmail VARCHAR(100)    
+    
+  SELECT @UserEmail = EmailId    
+  FROM etrade.MobileUSer    
+  WHERE UserId = @UserId  
+
+  
+  --SELECT * FROM etrade.eservices
+  DECLARE @TypeOfLicenseRequest nvarchar(200)=N'ChangetheCommercialAddressReqSubmit'
+ -- if(@serviceid=42)
+ --SET @TypeOfLicenseRequest=N'AddNewImportLicenseReqSubmit'
+ --  if(@serviceid=43)
+ --SET @TypeOfLicenseRequest=N'RenewImportLicenseReqSubmit'
+ -- if(@serviceid=44)
+ --SET @TypeOfLicenseRequest=N'RenewIndustrialLicenseReqSubmit'
+ -- if(@serviceid=45)
+ --SET @TypeOfLicenseRequest=N'RenewCommercialLicenseReqSubmit'
+
+
+ 
+  INSERT INTO [KGACEmailOutSyncQueue] (    
+   [Sync]    
+   ,[MsgType]    
+   ,[UserId]    
+   ,[TOEmailAddress]    
+   ,[CCEmailAddress]    
+   ,[BCCEmailAddress]    
+   ,[SampleRequestNo]    
+   ,[DateCreated]    
+   ,[DateModified]    
+   ,[Status]    
+   ,ManifestNo    
+   )    
+  VALUES (    
+   0    
+   ,@TypeOfLicenseRequest
+   ,''    
+   ,(SELECT emailid FROM etrade.mobileuser WHERE userid IN (SELECT createdby FROM etrade.EServiceRequests WHERE EServiceRequestId=@EserviceRequestId))--@EmailId    
+   ,''    
+   ,''    
+    ,(SELECT OrganizationRequestId FROM etrade.OrganizationRequests WHERE RequestNumber=(SELECT EServiceRequestNumber FROM etrade.EServiceRequests WHERE EServiceRequestId=@EserviceRequestId ))--,@EserviceRequestId    
+   ,GETDATE()    
+   ,GETDATE()    
+   ,'Created'    
+   ,null    
+   )    
+       
+
+  SELECT '1' AS 'Status'
+
+  END   
+ramam
+
+USE [MicroclearLight_July23]
+GO
+/****** Object:  StoredProcedure [etrade].[sp_UpdateConsigneeUserDetailsForEServices]    Script Date: 4/15/2024 11:43:25 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+  
+ALTER    PROCEDURE [etrade].[sp_UpdateConsigneeUserDetailsForEServices] (    
+@Userid varchar(200)='',    
+@CivilIdExpirydate datetime='',     
+@TradeLicenseExpiryDate datetime='',     
+@PassportExpirydate datetime='',     
+@PassportNo nvarchar(100)='',    
+@MobileNumber varchar(15)='',    
+@MailAddress nvarchar(200)='',    
+@OfficialAddress nvarchar(200)='',    
+@DateCreated datetime='',    
+@EServiceRequestNumber  nvarchar(100)  ,    
+@SelectedOrgidForIssuance varchar(500)='',    
+@Nationality varchar(10)='' ,  
+@FromBusiness nvarchar(500)='',  
+@ChangeJobTitleTo varchar(20)='',  
+@ChangeJobTitleFrom nvarchar(500)='',  
+ @TradelicenseNUmber nvarchar(500)='',  
+ @UTFBrokerPersonalId  bigint=''  
+    
+)    
+AS        
+BEGIN      
+      
+    
+            
+         declare @BrokerOrgId int    
+         declare @EServiceRequestid int    
+    
+      
+select @EServiceRequestid= EServiceRequestid  from [etrade].[EServiceRequests] where eservicerequestnumber=@EServiceRequestNumber;    
+      
+select @BrokerOrgId= OrganizationId  from [etrade].[EServiceRequestsDetails]     
+    
+where EserviceRequestId=@EServiceRequestid and StateId not in ('EServiceRequestDetailsCompletedState') ;    
+      
+        
+  
+  
+      DECLARE @CurrentRequestState VARCHAR(50) = (    
+   SELECT stateid    
+   FROM etrade.EServiceRequests    
+   WHERE EserviceRequestId=@EServiceRequestid    
+   )      
+     
+    DECLARE @serviceid INT = (    
+   SELECT ServiceId    
+   FROM etrade.EServiceRequests    
+   WHERE EserviceRequestId=@EServiceRequestid    
+   )    
+     
+-- @BrokerOrgId        
+        
+  
+  print(@CurrentRequestState)  
+    if( (@CurrentRequestState!='EservTranReqInitAcceptedState' and @CurrentRequestState!='EservTranReqProceedState' ))-- broker transfer service handling   
+     
+  begin--This is to ignore request update after the intial approval  
+    
+  Update ED    
+SET ED.CivilIdExpirydate = CASE WHEN @CivilIdExpirydate <>'' THEN @CivilIdExpirydate ELSE CivilIdExpirydate END,    
+    ED.PassportNo = CASE WHEN @PassportNo  <>'' THEN @PassportNo ELSE PassportNo END,    
+    ED.PassportExpirydate = CASE WHEN @PassportExpirydate  <>'' THEN @PassportExpirydate ELSE PassportExpirydate END,    
+       ED.AssociatedOrgIds = CASE WHEN @SelectedOrgidForIssuance  <>'' THEN @SelectedOrgidForIssuance ELSE AssociatedOrgIds END,    
+    ED.LicenseNumberExpiryDate = CASE WHEN @TradeLicenseExpiryDate  <>'' THEN @TradeLicenseExpiryDate ELSE LicenseNumberExpiryDate END ,   
+  ED.FromBusiness = CASE WHEN @FromBusiness  <>'' THEN @FromBusiness ELSE FromBusiness END,    
+  ED.ChangeJobTitleTo = CASE WHEN @ChangeJobTitleTo  <>'' THEN @ChangeJobTitleTo ELSE ChangeJobTitleTo END,    
+  ED.ChangeJobTitleFrom = CASE WHEN @ChangeJobTitleFrom  <>'' THEN @ChangeJobTitleFrom ELSE ChangeJobTitleFrom END,   
+  ED.LicenseNumber = CASE WHEN @TradelicenseNUmber  <>'' THEN @TradelicenseNUmber ELSE LicenseNumber END,   
+   ED.UTFBrokerPersonalId = CASE WHEN @UTFBrokerPersonalId  <>'' THEN @UTFBrokerPersonalId ELSE UTFBrokerPersonalId END,   
+   
+  
+  ED.MobileNumber=@MobileNumber,ED.Email=@MailAddress,ED.Address=@OfficialAddress,    
+      
+  ED.DateCreated=@DateCreated,    
+  ed.Nationality=(select LocationId from AllCountries where Name=@Nationality),    
+  EServiceRequestID=@EServiceRequestid  ,
+  ED.ReadyForSahelSubmission=0
+   from [etrade].[EServiceRequests] U     
+   inner join [etrade].[EServiceRequestsDetails] ED    
+       
+   on ED.EServiceRequestid = U.EServiceRequestid    
+       
+   where ED.OrganizationId=@BrokerOrgId -- and U.ServiceId=2     
+       
+    and ED.StateId not in ('EServiceRequestDetailsCompletedState')     
+   and u.EserviceRequestId=@EServiceRequestid    
+   ;    
+  
+                                            
+  
+          
+            
+  end  
+    
+  
+  
+  
+       
+   
+     if(@serviceid!=14)  
+     begin  
+  
+  declare @ActionId varchar(100)   
+  
+  print('here');  
+  
+  
+ update U set U.stateid=case when u.StateId='EServiceRequestRejectedState' and ed.RejectionRemarks is not null  
+ then 'EServiceRequestReSubmittedState' else 'EServiceRequestSubmittedState' end   
+ ,RequestSubmissionDateTime=GETDATE(),DateModified = getdate()  
+  
+ from [etrade].[EServiceRequests] U    
+    
+   inner join [etrade].[EServiceRequestsDetails] ED    
+       
+   on ED.EServiceRequestid = U.EServiceRequestid    
+  
+ where U.EserviceRequestId=@EServiceRequestid    
+  
+   
+ update ED set ED.stateid=case when UY.StateId='EServiceRequestReSubmittedState' and ed.RejectionRemarks is not null  
+ then 'EServiceRequestDetailsReSubmittedState' else 'EServicesRequestDetailsSubmittedState' end ,DateModified = getdate()  
+  
+  
+ from [etrade].[EServiceRequests] UY    
+    
+   inner join [etrade].[EServiceRequestsDetails] ED    
+       
+   on ED.EServiceRequestid = UY.EServiceRequestid    
+  
+ where UY.EserviceRequestId=@EServiceRequestid    
+  
+  
+-- change all remainig org request to deleted   
+  
+   update UY set UY.stateid='EServiceRequestDeletedState'  
+  
+  from [etrade].[EServiceRequests] UY    
+    
+   inner join [etrade].[EServiceRequestsDetails] ED    
+       
+   on ED.EServiceRequestid = UY.EServiceRequestid    
+  
+ where ed.organizationid in (select organizationid from  [etrade].[EServiceRequestsDetails] where EServiceRequestid=@EServiceRequestid  
+  
+ ) and uy.stateid in ('EServiceRequestRejectedState','EServiceRequestCreatedState')  
+  
+    update ED set ED.stateid='EServicesRequestDetailsDeletedState'  
+  
+  from [etrade].[EServiceRequests] UY    
+    
+   inner join [etrade].[EServiceRequestsDetails] ED    
+       
+   on ED.EServiceRequestid = UY.EServiceRequestid    
+  
+ where ed.organizationid in (select organizationid from  [etrade].[EServiceRequestsDetails] where EServiceRequestid=@EServiceRequestid  
+  
+ ) and uy.stateid in ('EServiceRequestRejectedState','EServiceRequestCreatedState')  
+   
+  
+  
+     end  
+    
+      
+    SELECT            
+    'UpdateUserDetails' AS "TableName"  ;          
+    
+ /*Mail Entries for UTF Request - start*/         
+if(@serviceid = dbo.KWConstantfn('GBL_Types.EserviceTypes.UTFRequestServiceId'))  
+Begin                          
+                          
+ Declare @ToEmailIds varchar(4000)='', @CCEmailIds varchar(4000) = '', @BCCEmailIds varchar(4000) = ''                          
+ Select @ToEmailIds = '',@CCEmailIds = '', @BCCEmailIds = ''                         
+                     
+ Declare @OrgId bigint = 0,@UTFStateForAction varchar(100) = ''                       
+   
+ declare @RejectionRemarks nvarchar(2000),@RejectionReasonId varchar(100)  
+   
+ Select @OrgId = UR.ConsigneeId,@UTFStateForAction=ur.stateid   
+ ,@RejectionReasonId = UR.RejectionReasonId, @RejectionRemarks = UR.RejectionRemarks  
+   
+ from UTFRequestVw UR Where UR.UTFRequestId = @EServiceRequestid     
+  
+  
+  
+Select @ToEmailIds = ISNULL(C.Email,'') from Contacts C                       
+ Where C.ParentId = @OrgId and C.StateId in ('OrganizationsContactsModifiedstate','OrganizationsContactsCreatestate')                   
+                   
+ --Select @ToEmailIds = Case When ISNULL(@ToEmailIds,'') = '' Then 'avemula@agility.com' Else @ToEmailIds End                  
+    
+                        
+ Insert Into KGACEmailOutSyncQueue                          
+ ( [Sync], [MsgType], [UserId], [TOEmailAddress], [CCEmailAddress], [BCCEmailAddress], [DateCreated], [Status], [HousebillId],               
+ [MailPriority],SampleRequestNo,BlockingPhases,HousebillNo)                          
+ Select                           
+  0, 'UTFbyConsignee', @UserId, @ToEmailIds, @CCEmailIds, @BCCEmailIds, GetDate(), 'Created', @EServiceRequestid, 'Normal',              
+   @UTFStateForAction,@RejectionRemarks,@RejectionReasonId                         
+ From etrade.EServiceRequests Where EServiceRequestId = @EServiceRequestid    
+                          
+End  
+/*Mail Entries for UTF Request - end*/   
+  
+  
+  
+     
+                                          
+/* audit entries for eserviceRequest and eserviceRequestDetails - start */                                 
+       
+ INSERT INTO ETRADE.[$EServiceRequests] ([$AuditTrailId], [$UserId], [$Operation], [$DateTime], [$DataProfileClassId], [$IPId],    
+   [$SessionId], [EServiceRequestId], [EServiceRequestNumber], [RequestSubmissionDateTime], [RequestCompletionDateTime], [StateId],    
+    [DateCreated], [CreatedBy], [ModifiedBy], [DateModified], [OwnerOrgId], [OwnerLocId], [ServiceId], [RequesterUserId],     
+    [RequesterUserType], [DeliveredDate], [DeliveredBy], [ApprovedDate], [ApprovedBy], [KNetReceiptNo])    
+ SELECT NEWID(),(select RequesterUserId from etrade.EServiceRequestsDetails where EserviceRequestId=@EServiceRequestid), 1, GETDATE(), 'EServiceRequests', '127.0.0.1', 'system', [EServiceRequestId],     
+  [EServiceRequestNumber], [RequestSubmissionDateTime], [RequestCompletionDateTime], [StateId], GETDATE(), (select RequesterUserId from etrade.EServiceRequestsDetails where EserviceRequestId=@EServiceRequestid),     
+  (select RequesterUserId from etrade.EServiceRequestsDetails where EserviceRequestId=@EServiceRequestid), GETDATE(), [OwnerOrgId], [OwnerLocId], [ServiceId], [RequesterUserId], [RequesterUserType], [DeliveredDate],    
+   [DeliveredBy], [ApprovedDate], [ApprovedBy], [KNetReceiptNo] FROM ETRADE.EServiceRequests WHERE EServiceRequestId = @EServiceRequestId   
+   and StateId like'%Submitted%'   
+    
+ INSERT INTO ETRADE.[$EServiceRequestsDetails] ([$AuditTrailId], [$UserId], [$Operation], [$DateTime], [$DataProfileClassId], [$IPId], [$SessionId], [EserviceRequestDetailsId], [EserviceRequestId], [RequestForUserType], [RequestServicesId], [OrganizationId], [RequesterLicenseNumber], [RequesterArabicName], [RequesterEnglishName], [ArabicFirstName], [ArabicSecondName], [ArabicThirdName], [ArabicLastName], [EnglishFirstName], [EnglishSecondName], [EnglishThirdName], [EnglishLastName], [Nationality], [CivilID], [CivilIDExpiryDate], [MobileNumber], [PassportNo], [PassportExpiryDate], [Address], [Email], [LicenseNumber], [LicenseNumberExpiryDate], [Remarks], [RejectionRemarks], [RequestForVisit], [RequestForVisitRemarks], [ExamAddmissionId], [ExamDetailsId], [status], [StateId], [DateCreated], [CreatedBy], [ModifiedBy], [DateModified], [OwnerOrgId], [OwnerLocId], [RequesterUserId], [RequestForName], [RequestForEmail], [Gender], [RequestForUserId], [BrokFileNo], [AssociatedOrgIds])    
+ Select NEWID(), (select RequesterUserId from etrade.EServiceRequestsDetails where EserviceRequestId=@EServiceRequestid), 1, GETDATE(), 'EServiceRequestsDetails', '127.0.0.1', 'system', [EserviceRequestDetailsId], [EserviceRequestId], [RequestForUserType]
+, [RequestServicesId], [OrganizationId], [RequesterLicenseNumber], [RequesterArabicName], [RequesterEnglishName], [ArabicFirstName], [ArabicSecondName], [ArabicThirdName], [ArabicLastName], [EnglishFirstName], [EnglishSecondName], [EnglishThirdName], [EnglishLastName], [Nationality], [CivilID], [CivilIDExpiryDate], [MobileNumber], [PassportNo], [PassportExpiryDate], [Address], [Email], [LicenseNumber], [LicenseNumberExpiryDate], [Remarks], [RejectionRemarks], [RequestForVisit], [RequestForVisitRemarks], [ExamAddmissionId], [ExamDetailsId], [status], [StateId], [DateCreated], [CreatedBy], [ModifiedBy], [DateModified], [OwnerOrgId], [OwnerLocId], [RequesterUserId], [RequestForName], [RequestForEmail], [Gender], [RequestForUserId], [BrokFileNo], [AssociatedOrgIds] from etrade.EServiceRequestsDetails WHERE EServiceRequestId = @EServiceRequestId     
+   and StateId like'%Submitted%'   
+    
+/* audit entries for eserviceRequest and eserviceRequestDetails - start */    
+  
+END    
