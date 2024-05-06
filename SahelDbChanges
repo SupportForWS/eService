@@ -1,8 +1,6 @@
-ALTER TABLE etrade.eservicerequestsdetails
-add  SahelToken1 VARCHAR(50) null,
- SahelToken2 VARCHAR(50) null
- ALTER TABLE etrade.eservicerequestsdetails
-DROP COLUMN SahelToken
-
-truncate table etrade.SahelNotficationDetailsFromEservice;
-ALTER TABLE etrade.SahelNotficationDetailsFromEservice add  EserviceRequestId bigint;
+ALTER TABLE etrade.organizationrequests
+ADD 
+ KMIDToken VARCHAR(50) null,
+ SelectedAuthorizer VARCHAR(50) null,
+ ReadyForSahelSubmission varchar default '0',
+ MCNotificationSent bit DEFAULT 0;
