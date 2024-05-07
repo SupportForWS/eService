@@ -1,18 +1,47 @@
-System.InvalidOperationException
-  HResult=0x80131509
-  Message=Nullable object must have a value.
-  Source=System.Private.CoreLib
-  StackTrace:
-   at System.ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue()
-   at System.Nullable`1.get_Value()
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(ServiceRequest serviceRequest) in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 242
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequestAndCallAPI>d__11.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 174
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequest>d__10.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 145
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<>c__DisplayClass9_0.<<CreateRequestObjectDTO>b__0>d.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 92
-
-  This exception was originally thrown at this call stack:
-    [External Code]
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequestAndCallAPI(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequest(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.CreateRequestObjectDTO.AnonymousMethod__0(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
+        public class InitiateOrganiztionRegistrationDTO
+        {
+            public SahelActionEnum? RequiredAction { get; set; }
+            public string RequestNumber { get; set; }
+            public string OrganizationArabicName { get; set; }
+            public string OrganizationEnglishName { get; set; }
+            public string TradeLicNumber { get; set; }
+            public string CivilId { get; set; }
+            public string AuthorizedPerson { get; set; }
+            public DateTime? AuthorizedSignatoryCivilIdExpiryDate { get; set; }
+            public int? Nationality { get; set; }
+            public DateTime? AuthorizedSignatoryIssueDate { get; set; }
+            public DateTime? AuthorizedSignatoryExpiryDate { get; set; }
+            public string POBoxNo { get; set; }
+            public string Address { get; set; }
+            public string City { get; set; }
+            public string State { get; set; }
+            public string PostalCode { get; set; }
+            public string BusinessNumber { get; set; }
+            public string BusinessFaxNumber { get; set; }
+            public string MobileNumber { get; set; }
+            public string CompanyCivilId { get; set; }
+            public string EmailId { get; set; }
+            public string WebPageAddress { get; set; }
+            public bool IsIndustrial { get; set; }
+            public string Block { get; set; }
+            public string Street { get; set; }
+            public string? ImportLicenceNumber { get; set; }
+            public string? ImportLicenceType { get; set; }
+            public DateTime? ImportIssueDate { get; set; }
+            public DateTime? ImportExpiryDate { get; set; }
+            public string CommercialLicenseNumber { get; set; }
+            public string CommercialLicenseType { get; set; }
+            public DateTime? CommercialIssueDate { get; set; }
+            public DateTime? CommercialExpiryDate { get; set; }
+            public string CommercialLicenseSubType { get; set; }
+            public string IndustrialLicenseNumber { get; set; }
+            public DateTime? IndustrialIssueDate { get; set; }
+            public DateTime? IndustrialExpiryDate { get; set; }
+            public string IndustrialRegistrationNumber { get; set; }
+            public DateTime? IndustrialRegistrationNumberIssueDate { get; set; }
+            public DateTime? AuthorizationExpiryDate { get; set; }
+            public string SelectedAuthorizer { get; set; }
+            public Dictionary<string, string> Files { get; set; }
+            public string DownloadRegistrationFormDocument { get; set; }
+            public string Agreement { get; set; }
+        }
