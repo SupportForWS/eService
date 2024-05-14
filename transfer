@@ -1,18 +1,12 @@
-System.InvalidOperationException
-  HResult=0x80131509
-  Message=Nullable object must have a value.
-  Source=System.Private.CoreLib
-  StackTrace:
-   at System.ThrowHelper.ThrowInvalidOperationException_InvalidOperation_NoValue()
-   at System.Nullable`1.get_Value()
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(ServiceRequest serviceRequest) in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 242
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequestAndCallAPI>d__11.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 174
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<ProcessServiceRequest>d__10.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 145
-   at sahelIntegrationIA.VerificationServiceForOrganizationServices.<>c__DisplayClass9_0.<<CreateRequestObjectDTO>b__0>d.MoveNext() in D:\SahelIAIntegrationWS\sahelIntegrationIA\VerificationServiceForOrganizationServices.cs:line 92
-
-  This exception was originally thrown at this call stack:
-    [External Code]
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.GetRenewLicenseDTO(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequestAndCallAPI(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.ProcessServiceRequest(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
-    sahelIntegrationIA.VerificationServiceForOrganizationServices.CreateRequestObjectDTO.AnonymousMethod__0(eServicesV2.Kernel.Domain.Entities.ServiceRequestEntities.ServiceRequest) in VerificationServiceForOrganizationServices.cs
+ select * from orgimporterlicense where importerLicenseNo ='202103050';
+select * from etrade.mobileuser where licensenumber = '442988';
+select * FROM   etrade.mobileuserorgmaps WHERE  parentorgtradelicence = '442988';
+select * from organizations where organizationid = 1527439
+select * from etrade.eservicerequests where eservicerequestnumber ='OR/12125/21';
+select * from etrade.eservicerequestsdetails where eservicerequestid =31866
+select * from etrade.organizationrequests where requestnumber ='OR/12125/21';
+SELECT * FROM OrganizationLinkTable where organizationcode = 'IM00668815'
+select * from organizations where commerciallicenseno like '%2021/10534%'
+update organizations set commerciallicenseno ='%2021/10534%' where commerciallicenseno like '%2021/105344%'
+select * from etrade.mobileuser where commerciallicensenumber like '%2021/10534%'
+select * from etrade.organizationrequests where commerciallicenseno like '%2021/10534%'
